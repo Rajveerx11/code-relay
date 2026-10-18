@@ -23,7 +23,7 @@ async function popup(t,config={}){
     let result={ok:true,snapshot};
     if(operation==='inspect')result={ok:true,url,frames:0,editors:[{target:0,label:secret,kind:'textarea',characters:secret.length,readOnly:false}]};
     if(operation===config.partial)result={ok:false,mutationPossible:true,error:secret+' '+url};
-    if(operation==='verify'&&calls.filter(x=>x==='verify').length===config.failVerify)result={ok:false,error:secret+' '+url};
+    if(operation==='verify'&&calls.filter(x=>x==='verify').length===config.failVerify)result={ok:false,error:config.verifyError??secret+' '+url};
     return [{frameId:0,documentId:'private-doc',result}];
   }}};
   await import(`../extension/popup.mjs?diagnostics=${++sequence}`);
@@ -62,6 +62,17 @@ for(const check of [1,2])test(`failed delayed check ${check} records failure and
   else outcome(p.report(),'verify-1','success','completed');
   assert.equal(p.calls.filter(x=>x==='insert').length,1);assert.equal(p.calls.filter(x=>x==='verify').length,check);
   assert.equal(p.nodes.undo.disabled,true);redacted(p.report());redacted(p.nodes.status.textContent);
+});
+test('verification status retains known safe causes while the report stays category-only',async t=>{
+  for(const message of ['The page reset or changed the imported code after the write.','The page replaced or changed the selected editor after the write.']){
+    const p=await popup(t,{failVerify:1,verifyError:message});await p.click('inspect');await p.click('insert');
+    assert.ok(p.nodes.status.textContent.includes(message),p.nodes.status.textContent);
+    assert.match(p.nodes.status.textContent,/write was attempted/);
+    assert.match(p.nodes.status.textContent,/No automatic retry or rollback/);
+    outcome(p.report(),'import','failed','verification-failed');
+    assert.ok(!p.report().includes(message));redacted(p.report());
+    assert.equal(p.nodes.insert.disabled,true);assert.equal(p.nodes.undo.disabled,true);
+  }
 });
 test('undo partial failure is logged without success',async t=>{
   const p=await popup(t,{partial:'undo'});await p.click('inspect');await p.click('insert');await p.click('undo');

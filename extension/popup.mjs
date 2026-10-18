@@ -147,9 +147,9 @@ async function verifyWrite(snapshot){
       }catch(error){record(action,'failed','verification-failed');throw error;}
     }
     return result.snapshot;
-  }catch{
+  }catch(error){
     resetTarget();
-    throw failure('The write was attempted, but the live editor did not pass verification. Check the page and inspect again. No automatic retry or rollback was performed.','verification-failed');
+    throw failure(`The write was attempted, but the live editor did not pass verification. ${failureInfo(error).message} Check the page and inspect again. No automatic retry or rollback was performed.`,'verification-failed');
   }
 }
 $('inspect').addEventListener('click',()=>guarded('inspect',async()=>{
