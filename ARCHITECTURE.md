@@ -180,7 +180,7 @@ The delayed samples occur roughly 150 ms and 750 ms after the write, subject to 
 
 `tools/serve.py` serves local fixtures with Python's `ThreadingHTTPServer`. It is outside the production runtime. Historical browser automation referenced in `TESTING.md` used a temporary script not included in this project.
 
-The current Windows Node run has one existing package-test path-separator failure; see [CONTEXT.md](CONTEXT.md) for the exact result. Neither these fixtures nor historical browser evidence verify a native installed-extension permission flow or live CodeTantra behavior.
+The package-test Windows path-separator failure is fixed using native `basename()` matching; the local Windows suite passes 34/34. `.github/workflows/ci.yml` defines Windows/Linux coverage on Node 22/24, with pinned actions and read-only permissions. `.gitattributes` preserves LF text checkouts, and `.gitignore` excludes local credentials/generated artifacts. See [CONTEXT.md](CONTEXT.md) and GitHub Actions for verification scope and actual CI results. Neither these fixtures nor historical browser evidence verify a native installed-extension permission flow or live CodeTantra behavior.
 
 ## Change boundaries
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync,readdirSync,statSync} from 'node:fs';
-import {resolve,dirname,join,relative} from 'node:path';
+import {resolve,dirname,join,relative,basename} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const read=p=>readFileSync(join(root,p),'utf8');
@@ -9,7 +9,7 @@ const walk=p=>readdirSync(p).flatMap(n=>statSync(join(p,n)).isDirectory()?walk(j
 const manifest=JSON.parse(read('manifest.json'));
 test('one root MV3 manifest has a resolvable popup and unchanged permissions',()=>{
  assert.equal(manifest.manifest_version,3);assert.equal(manifest.version,'1.0.1');
- assert.deepEqual(walk(root).filter(p=>p.endsWith('/manifest.json')),[join(root,'manifest.json')]);
+ assert.deepEqual(walk(root).filter(p=>basename(p)==='manifest.json'),[join(root,'manifest.json')]);
  assert.equal(manifest.action.default_popup,'extension/popup.html');
  assert.ok(existsSync(join(root,manifest.action.default_popup)));
  assert.deepEqual(manifest.permissions,['activeTab','scripting']);

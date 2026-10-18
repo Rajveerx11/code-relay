@@ -15,7 +15,8 @@ It is **not** a VS Code extension, an exam/proctoring bypass, an automatic submi
 - No npm packages, `package.json`, build step, bundler, framework or production backend.
 - No background service worker, persistent content script or broad host permissions.
 - Node's built-in test runner provides automated tests; Python's standard library provides an optional local demo server.
-- This inspected folder has no Git repository metadata. Do not assume a branch, remote, commit history or CI configuration exists here.
+- GitHub repository: [Rajveerx11/CodeTantraChromeExtension](https://github.com/Rajveerx11/CodeTantraChromeExtension), verified private when created. Default branch: `main`.
+- `.github/workflows/ci.yml` defines Node 22/24 tests and production-module syntax checks on Windows and Linux for pull requests and pushes to `main`. Check GitHub Actions for actual run results; workflow presence alone does not prove a passing run.
 
 ## File map
 
@@ -33,7 +34,9 @@ It is **not** a VS Code extension, an exam/proctoring bypass, an automatic submi
 | `tests/bridge.js`, `tests/saved-file.mjs`, `tests/safety.mjs` | Browser-fixture support; not production extension code. |
 | `tools/serve.py` | Loopback-only optional demo/test HTTP server. |
 | `TESTING.md`, `VERIFICATION.json` | Existing recorded verification evidence and its limits. |
-| `CHECKSUMS.sha256` | Existing bundle checksums; does not include these new context/architecture documents. |
+| `CHECKSUMS.sha256` | Historical imported-bundle checksums, not a manifest of the current working tree. |
+| `.github/workflows/ci.yml` | Dependency-free Windows/Linux Node test and syntax-check matrix. |
+| `.gitattributes`, `.gitignore` | Stable LF checkout text and exclusions for credentials/local generated artifacts. |
 
 ## Run locally
 
@@ -94,13 +97,14 @@ The extension has no explicit source upload, telemetry or persistent storage. So
 
 Preserve exact URL/document checks, consent, assessment checks, visible/writable-target filtering, stale-snapshot rejection and replace-all confirmation when changing behavior. Do not broaden permissions or introduce bypass, monitoring-disabling or submission features implicitly.
 
-## Verification status from this documentation pass
+## Verification status
 
-- Executed on Windows with **Node v24.19.0**: `node --test tests/*.test.mjs` produced **33 passed, 1 failed** out of 34.
-- The existing failure is `tests/package.test.mjs:12`: `endsWith('/manifest.json')` does not match Windows backslash paths, so the manifest search returns an empty array. No test or production code was changed for this documentation task.
-- `sha256sum -c CHECKSUMS.sha256` passed for all **26 existing listed files** before these documents were added. The new documents are not covered by that existing list.
-- `TESTING.md` and `VERIFICATION.json` record an earlier 34/34 Node run and 19/19 local browser-fixture run. These are historical results, not results rerun in this pass.
-- Native extension installation, actual `activeTab` grants, clipboard permission prompts and live CodeTantra behavior were not exercised in this pass. Browser fixtures are not proof of those behaviors.
+- Before the foundation fix, Windows **Node v24.19.0** produced **33 passed, 1 failed**: `tests/package.test.mjs` assumed `/` separators when finding the root manifest.
+- After switching to native `basename()` matching, `node --test tests/*.test.mjs` passed **34/34** locally on Windows. Production-module syntax checks also passed. A temporary extra nested manifest was correctly rejected, confirming the exactly-one-root-manifest assertion remains effective.
+- No production code, extension version or permissions changed in that fix. See GitHub Actions for independent Windows/Linux matrix results.
+- `CHECKSUMS.sha256` and `VERIFICATION.json` are preserved historical evidence from imported baseline commit `0371205`. All 26 listed files passed checksum validation before subsequent edits. Changed tests/docs now intentionally differ; use the baseline commit when reproducing those old checksums. Current release artifact generation is tracked in issue #8.
+- `TESTING.md` separates current foundation checks from the historical 34/34 Node and 19/19 browser-fixture runs. The browser runs were not repeated for the foundation fix.
+- Native extension installation, actual `activeTab` grants, clipboard permission prompts and live CodeTantra behavior remain unverified. Browser fixtures are not proof of those behaviors.
 
 ## Maintenance orientation
 
@@ -109,3 +113,7 @@ Keep the root manifest layout and relative module paths intact. `pageEditor()` m
 Choose regression coverage by change: scope checks in `core.test.mjs`, editor behavior in `adapter.test.mjs`, document routing in `frames.test.mjs`, popup state in `popup.test.mjs`, serialization/write verification in `roundtrip.test.mjs`, and packaging in `package.test.mjs`. Browser fixtures and real Chrome manual testing remain necessary for behaviors that fakes cannot establish.
 
 Existing checksums and verification records describe the prior bundle. If producing a new release, intentionally regenerate its integrity/evidence artifacts after validation; do not silently present historical results as current release verification.
+
+## Tracked next work
+
+GitHub issues #1–#2 cover the Windows test/CI foundation. Remaining work is tracked separately: #3 installed-extension browser tests, #4 authorized CodeTantra compatibility, #5 application persistence, #6 read-only diagnostics, #7 undo UX, and #8 release artifacts. Issues #4–#5 require authorized site evidence; do not infer CodeTantra internals or claim live compatibility from local fixtures.

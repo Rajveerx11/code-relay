@@ -1,8 +1,24 @@
-# Visible-target and delayed-write verification
+# Verification
 
-This working copy retains manifest version 1.0.1; no release bump or permission changes were made.
+## Current repository foundation checks
 
-## Passed
+The Windows packaging regression is fixed with platform-independent `basename()` matching. Local validation on Windows, Node v24.19.0:
+
+- `node --test tests/*.test.mjs`: **34/34 passed** (baseline before the fix: 33/34).
+- `node --check extension/core.mjs`, `node --check extension/editor-adapter.mjs`, and `node --check extension/popup.mjs`: passed.
+- A temporary additional nested `manifest.json` caused the root-manifest test to fail as expected; the temporary fixture was removed afterward.
+- `.github/workflows/ci.yml` runs these tests and syntax checks on Windows/Linux with Node 22/24. Consult GitHub Actions for actual CI results.
+- Production extension code, version and permissions are unchanged. No browser or live CodeTantra validation was performed for this foundation change.
+
+`CHECKSUMS.sha256` and `VERIFICATION.json` retain the imported baseline evidence at commit `0371205`; they do not attest to the current tests/docs or new repository files. Check them against that baseline, not the modified working tree. Release artifact regeneration is tracked in GitHub issue #8.
+
+## Historical visible-target and delayed-write verification
+
+The rest of this document records earlier verification imported with the project. Tool versions, external temporary paths and browser results below are historical, not newly reproduced results.
+
+That working copy retained manifest version 1.0.1; no release bump or permission changes were made.
+
+### Passed
 
 - `node --test tests/adapter.test.mjs tests/roundtrip.test.mjs tests/frames.test.mjs tests/popup.test.mjs`: 30/30 passed, exit 0.
 - `node --test tests/*.test.mjs`: 34/34 passed, exit 0, Node v18.19.1.
@@ -52,4 +68,4 @@ Cross-origin, inaccessible/sandboxed, hidden, `about:blank` and `srcdoc` frames 
 7. To verify stale-document protection, reload the selected iframe between inspection and import: import must fail and require inspection again, not target a replacement editor.
 8. Existing optional browser fixtures remain at `/tests/browser.html`, `/tests/safety.html` and `/tests/ui.html`. These use a test-only bridge, not Chrome's real frame permissions. The Ace fixture fetches an external library.
 
-`VERIFICATION.json` records current verification and production hashes. `CHECKSUMS.sha256` covers every other bundled file; no ZIP was created or verified in this repair.
+For that historical repair, `VERIFICATION.json` recorded verification and production hashes, and `CHECKSUMS.sha256` listed the other files in that bundle. Neither file covers all current repository additions or modifications. No ZIP was created or verified in that repair.
