@@ -15,7 +15,7 @@ It is **not** a VS Code extension, an exam/proctoring bypass, an automatic submi
 - No npm packages, `package.json`, build step, bundler, framework or production backend.
 - No background service worker, persistent content script or broad host permissions.
 - Node's built-in test runner provides automated tests; Python's standard library provides an optional local demo server.
-- GitHub repository: [Rajveerx11/CodeTantraChromeExtension](https://github.com/Rajveerx11/CodeTantraChromeExtension), verified private when created. Default branch: `main`.
+- GitHub repository: [Rajveerx11/code-relay](https://github.com/Rajveerx11/code-relay), verified private when created. Default branch: `main`.
 - `.github/workflows/ci.yml` defines Node 22/24 tests and production-module syntax checks on Windows and Linux for pull requests and pushes to `main`. Check GitHub Actions for actual run results; workflow presence alone does not prove a passing run.
 
 ## File map
@@ -26,6 +26,7 @@ It is **not** a VS Code extension, an exam/proctoring bypass, an automatic submi
 | `extension/popup.html` | Consent, target selection, source preview, import and undo interface. |
 | `extension/popup.css` | Popup presentation and control states. |
 | `extension/popup.mjs` | Popup state, file/clipboard loading, Chrome scripting, frame routing and delayed verification. |
+| `extension/diagnostics.mjs` | Bounded memory-only safe execution report and explicit native download. |
 | `extension/core.mjs` | Pure `validateScope()` URL/consent validation. |
 | `extension/editor-adapter.mjs` | Self-contained `pageEditor()` injected into the page's MAIN world. |
 | `demo/` | Top-frame textarea demo, same-origin iframe demo and UTF-8 sample program. |
@@ -68,12 +69,13 @@ Use an installed Node version supporting ES modules and `node:test`:
 
 ```sh
 node --test tests/*.test.mjs
+node --check extension/diagnostics.mjs
 node --check extension/core.mjs
 node --check extension/editor-adapter.mjs
 node --check extension/popup.mjs
 ```
 
-There is no dependency-install step. In a shell without wildcard expansion, pass the six `tests/*.test.mjs` files explicitly if needed.
+There is no dependency-install step. In a shell without wildcard expansion, pass the `tests/*.test.mjs` files explicitly if needed.
 
 ## Supported behavior and limits
 
@@ -93,7 +95,7 @@ Unsupported: Monaco, CodeMirror, private/inaccessible Ace instances, cross-origi
 
 Required permissions are `activeTab` and `scripting`; `clipboardRead` is optional and requested on the clipboard button gesture. Saved-file import does not require clipboard permission.
 
-The extension has no explicit source upload, telemetry or persistent storage. Source, snapshots and undo data are held in popup memory. Importing into a website exposes that code to the website and its own autosave/server behavior. MAIN-world integration shares the page's JavaScript environment; use only trusted, authorized pages.
+The extension has no explicit source upload, telemetry or persistent storage. Source, snapshots and undo data are held in popup memory. Execution diagnostics retain at most 100 timestamped entries using only fixed action/status/category messages. Source, clipboard text, filenames, editor labels, URLs, account/student data and raw exceptions are excluded from the report. Closing the popup clears the log; explicit export requests a local file, which persists independently. Logs do not prove saving/submission or live compatibility. Importing into a website exposes that code to the website and its own autosave/server behavior. MAIN-world integration shares the page's JavaScript environment; use only trusted, authorized pages.
 
 Preserve exact URL/document checks, consent, assessment checks, visible/writable-target filtering, stale-snapshot rejection and replace-all confirmation when changing behavior. Do not broaden permissions or introduce bypass, monitoring-disabling or submission features implicitly.
 
@@ -116,4 +118,4 @@ Existing checksums and verification records describe the prior bundle. If produc
 
 ## Tracked next work
 
-GitHub issues #1–#2 cover the Windows test/CI foundation. Remaining work is tracked separately: #3 installed-extension browser tests, #4 authorized CodeTantra compatibility, #5 application persistence, #6 read-only diagnostics, #7 undo UX, and #8 release artifacts. Issues #4–#5 require authorized site evidence; do not infer CodeTantra internals or claim live compatibility from local fixtures.
+GitHub issues #1–#2 cover the Windows test/CI foundation. Remaining work is tracked separately: #3 installed-extension browser tests, #4 authorized CodeTantra compatibility, #5 application persistence, #6 read-only diagnostics, #7 undo UX, and #8 release artifacts. Issue #10 implements only the privacy-safe execution-log slice; #6 remains open for compatibility diagnostics. Issues #4–#5 require authorized site evidence; do not infer CodeTantra internals or claim live compatibility from local fixtures.

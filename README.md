@@ -30,6 +30,14 @@ To replace the whole program, select **Replace entire editor**, check the separa
 
 Optional: copy your program and click **Or read clipboard**. Chrome may ask for clipboard-read permission. Saved-file import does not require that permission. Permission failure does not mean CodeTantra's paste restriction was fixed or bypassed.
 
+## Execution diagnostics
+
+Keep the popup open while testing, then expand **Execution diagnostics** below the status. It shows timestamped action starts/results for inspection, target selection, file/clipboard loading, import, both delayed checks, undo and observable popup failures. Warnings, possible partial writes and failed verification are distinct; there are no automatic retries or rollbacks.
+
+The report keeps only the latest **100 entries in popup memory**. Closing the popup clears it. **Clear log** clears only diagnostics, not your source or undo backup. Review the visible **Report preview**, then explicitly click **Export report** to request a local text download before closing the popup. The downloaded file remains until you delete it.
+
+Only fixed action/status/category messages and timestamps are included: no source, clipboard text, filenames, editor labels, URLs, account/student data, raw exception messages or stacks. Unknown errors are generic. Logs do **not** prove page saving, submission or live CodeTantra support. Share the exported report instead of copying private page details; the normal source/target previews are not part of the report.
+
 ## Safe local trial
 
 Python 3 is needed only for this optional demo/test server. Open a terminal in the extracted `practice-program-import-fixed` folder and run:
@@ -58,9 +66,9 @@ The reported “No supported writable top-frame editor” error came from a hard
 
 The live CodeTantra editor, iframe structure, permission context, saving behavior, and platform rules have not been inspected or verified. This fixes the same-origin iframe limitation, not every possible CodeTantra configuration.
 
-- **No supported writable editor:** Monaco, CodeMirror and inaccessible Ace instances remain unsupported. Cross-origin, sandboxed/inaccessible, hidden, and `about:blank`/`srcdoc` frames are not supported by this build. No broad host permissions are requested. If the error remains, provide the practice URL and a screenshot with personal information hidden so the actual editor/frame setup can be identified.
+- **No supported writable editor:** Monaco, CodeMirror and inaccessible Ace instances remain unsupported. Cross-origin, sandboxed/inaccessible, hidden, and `about:blank`/`srcdoc` frames are not supported by this build. No broad host permissions are requested. If the error remains, export the execution report. Further compatibility investigation requires separately authorized, privacy-reviewed page evidence.
 - **Editor changed:** the false alarm caused by comparing JSON property order across Chrome messages is fixed. Reload the extension in `chrome://extensions`, refresh the practice page, and inspect again. Snapshot fields are now compared by value. If an actual change occurs, the error identifies **content**, **selection**, or **identity**; close the popup, set the cursor, reopen it and inspect again. No stale content is overwritten.
-- **Reported import but no visible change:** reload this updated extension and inspect again. Earlier builds chose the first writable editor and checked only its immediate value. The updated build prefers the focused editor, excludes invisible helper inputs, shows the selected target's contents, and performs two delayed checks. If the contents do not match your code editor, choose the correct target; do not import into an unrelated input. If the problem persists, share the target label/frame and exact new status, plus a screenshot with personal details hidden. Live CodeTantra remains unverified.
+- **Reported import but no visible change:** reload this updated extension and inspect again. Earlier builds chose the first writable editor and checked only its immediate value. The updated build prefers the focused editor, excludes invisible helper inputs, shows the selected target's contents, and performs two delayed checks. If the contents do not match your code editor, choose the correct target; do not import into an unrelated input. If the problem persists, export the execution report; do not share source previews, private labels or URLs. Live CodeTantra remains unverified.
 - **Invalid UTF-8:** resave the source as UTF-8 in VS Code.
 - **Clipboard access failed:** use the saved-file input or paste into the extension preview.
 - **Managed browser blocks Developer mode:** contact the administrator. Do not weaken its security controls.

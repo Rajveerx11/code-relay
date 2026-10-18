@@ -69,6 +69,14 @@ Its in-memory state has these fields:
 
 `guarded()` manages busy/error status. `resetTarget()` clears the target, approval snapshot and undo state, but does not erase the source preview. The Clear action explicitly clears the preview/file input too. Closing the popup discards its JavaScript state.
 
+### Execution diagnostics: `extension/diagnostics.mjs`
+
+Each popup creates a memory-only log capped at 100 entries, evicting the oldest. `record()` accepts only allowlisted action/status/category tokens and generates its own ISO timestamp and fixed message; it does not accept arbitrary detail objects or exceptions. `serialize()` produces the same plain text shown with `textContent` in the expandable report preview. Clear affects only this log. Export uses a native Blob/object URL and temporary download anchor with a fixed filename, then removes the anchor and revokes the URL. A download request is not confirmation that the user saved the file.
+
+The controller records inspection/target choice, source loading, import/undo and each of the two read-only delayed checks. Failed checks and possible partial writes never become a successful operation result. Observable `error` and `unhandledrejection` events produce generic entries without reading their payloads. Diagnostic formatting/render/export failures are contained and never recursively reported. Unknown workflow exceptions also receive a generic status; only locally created failures and explicitly allowlisted fixed adapter messages retain detailed workflow status.
+
+No source, clipboard text, filenames, editor labels, URLs, identities, account/student data, raw exception messages or stacks enter this report. Existing source/target previews remain separate. Closing the popup discards the log; an explicitly exported file remains outside the extension. No storage, permissions, backend or dependencies were added. Logs cannot establish saving/submission, errors in unrelated page contexts, or live CodeTantra support. This is issue #10's execution-log slice, not completion of #6's compatibility diagnostics.
+
 ### Scope validator: `extension/core.mjs`
 
 `validateScope(current, approved, consent)` is a pure helper. It requires consent and exact URL equality, accepts HTTPS or HTTP loopback hosts (`localhost`, `127.0.0.1`, `[::1]`), rejects embedded URL credentials, and rejects assessment-like URL keywords.
@@ -170,6 +178,7 @@ The delayed samples occur roughly 150 ms and 750 ms after the write, subject to 
 | --- | --- |
 | Pure scope | `tests/core.test.mjs`: approval, URL and protocol boundaries. |
 | Adapter unit | `tests/adapter.test.mjs`: small DOM fakes, text/selection/identity invariants and mutation failures. |
+| Diagnostics | `tests/diagnostics.test.mjs`, `tests/popup-diagnostics.test.mjs`: vocabulary/redaction, bounded retention, clear/export/cleanup and actual controller success/failure/check logging with small fakes. |
 | Popup wiring | `tests/popup.test.mjs`: fake DOM/Chrome APIs, state and error invalidation. |
 | Frame routing | `tests/frames.test.mjs`: fake frame/document responses, focus, navigation and denied access. |
 | Serialization integration | `tests/roundtrip.test.mjs`: actual popup and serialized adapter in separate JS contexts with sorted-key transport; fake textarea/Ace. |
@@ -180,7 +189,7 @@ The delayed samples occur roughly 150 ms and 750 ms after the write, subject to 
 
 `tools/serve.py` serves local fixtures with Python's `ThreadingHTTPServer`. It is outside the production runtime. Historical browser automation referenced in `TESTING.md` used a temporary script not included in this project.
 
-The package-test Windows path-separator failure is fixed using native `basename()` matching; the local Windows suite passes 34/34. `.github/workflows/ci.yml` defines Windows/Linux coverage on Node 22/24, with pinned actions and read-only permissions. `.gitattributes` preserves LF text checkouts, and `.gitignore` excludes local credentials/generated artifacts. See [CONTEXT.md](CONTEXT.md) and GitHub Actions for verification scope and actual CI results. Neither these fixtures nor historical browser evidence verify a native installed-extension permission flow or live CodeTantra behavior.
+The package-test Windows path-separator failure is fixed using native `basename()` matching; that foundation change passed 34/34 locally. See [TESTING.md](TESTING.md) for current diagnostics validation. `.github/workflows/ci.yml` defines Windows/Linux coverage on Node 22/24, with pinned actions and read-only permissions. `.gitattributes` preserves LF text checkouts, and `.gitignore` excludes local credentials/generated artifacts. See [CONTEXT.md](CONTEXT.md) and GitHub Actions for verification scope and actual CI results. Neither these fixtures nor historical browser evidence verify a native installed-extension permission flow or live CodeTantra behavior.
 
 ## Change boundaries
 
