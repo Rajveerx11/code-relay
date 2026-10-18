@@ -1,0 +1,146 @@
+{
+  "version": "1.0.1",
+  "repair": "focused/explicit target selection, target-content preview, invisible-input filtering and delayed live-editor verification; no release bump",
+  "verified_at": "2026-10-13T15:35:09.727495+00:00",
+  "node_version": "v18.19.1",
+  "node_test_total": 34,
+  "node_test_passed": 34,
+  "node_execution": {
+    "command": "node --test tests/*.test.mjs",
+    "exit_code": 0,
+    "summary": "34 tests; 34 passed; 0 failed"
+  },
+  "focused_execution": {
+    "command": "node --test tests/adapter.test.mjs tests/roundtrip.test.mjs tests/frames.test.mjs tests/popup.test.mjs",
+    "exit_code": 0,
+    "summary": "30 tests; 30 passed; 0 failed"
+  },
+  "syntax_checks": {
+    "command": "node --check extension/editor-adapter.mjs && node --check extension/popup.mjs && node --check tests/adapter.test.mjs && node --check tests/roundtrip.test.mjs && node --check tests/frames.test.mjs && node --check tests/popup.test.mjs",
+    "exit_code": 0
+  },
+  "production_sha256": {
+    "manifest.json": "be12f392a37a4ed44f2009ef5a2057d94a3b8152d20189ba55124205a6b56ea0",
+    "extension/core.mjs": "58692fd731b755a0cb4c4ace8fc16cabb4dd7b73f08524c7de797d8ad9f51d5b",
+    "extension/editor-adapter.mjs": "32d57140efa8463125ff28b009e5cd0f165efc57c4fe3aaab1ff3b5475f35ff8",
+    "extension/popup.mjs": "a40bc63719f6fb9b7634ad340015f4d83459078d0a7a6d66db20523ae05907c1",
+    "extension/popup.html": "9899feb0ca2a9ee92540c9d885413bae7b3b2ba6e00f73daa0f6002cc93c34a8",
+    "extension/popup.css": "4718e24dbb5650807132aae1b1ad4a65f1514186a98254fdede29099e8c6871f"
+  },
+  "browser_fixtures_rerun": true,
+  "installed_chrome_extension_verified": false,
+  "live_codetantra_verified": false,
+  "browser_blocker": null,
+  "unsupported": [
+    "cross-origin/inaccessible frames",
+    "about:blank/srcdoc frames",
+    "Monaco",
+    "CodeMirror",
+    "private Ace instances"
+  ],
+  "zip_verified": false,
+  "regression_before_fix": {
+    "command": "node --test --test-name-pattern='does not report success' tests/roundtrip.test.mjs",
+    "exit_code": 1,
+    "summary": "3 false-success regressions reproduced (reset, replacement, hidden target); 2 skipped"
+  },
+  "browser_execution": {
+    "command": "/home/rajveer/.nvm/versions/node/v22.22.3/bin/node /mnt/c/Users/rajve/.codex/skills/playwright-skill/run.js /tmp/practice-import-browser-check.cjs",
+    "exit_code": 0,
+    "browser": "Chrome for Testing 148.0.7778.96",
+    "sandbox": true,
+    "viewport": {
+      "width": 1280,
+      "height": 1000
+    },
+    "total": 19,
+    "passed": 19,
+    "results": {
+      "base": "http://127.0.0.1:8766",
+      "results": [
+        {
+          "name": "popup: inspect, clipboard preview, insertion and undo (Chrome API test bridge)",
+          "ok": true
+        },
+        {
+          "name": "popup: clipboard failure preserves preview",
+          "ok": true
+        },
+        {
+          "name": "real textarea reset at 300ms fails delayed popup verification",
+          "ok": true,
+          "status": "The write was attempted, but the live editor did not pass verification. The page reset or changed the imported code after the write. Check the page and inspect again. No automatic retry or rollback was performed."
+        },
+        {
+          "name": "real iframe focus follows active ancestor chain, not stale child focus",
+          "ok": true
+        },
+        {
+          "name": "reject changed content without overwriting",
+          "ok": true
+        },
+        {
+          "name": "replace all requires separate confirmation",
+          "ok": true
+        },
+        {
+          "name": "confirmed replace all inserts literal markup",
+          "ok": true
+        },
+        {
+          "name": "read-only and disabled protection",
+          "ok": true
+        },
+        {
+          "name": "textarea length limit protection",
+          "ok": true
+        },
+        {
+          "name": "exact URL and consent required",
+          "ok": true
+        },
+        {
+          "name": "unsupported custom editor hidden inputs excluded",
+          "ok": true
+        },
+        {
+          "name": "hidden textarea excluded",
+          "ok": true
+        },
+        {
+          "name": "assessment marker rejected",
+          "ok": true
+        },
+        {
+          "name": "iframe not guessed as top-frame editor",
+          "ok": true
+        },
+        {
+          "name": "identical replacement node is refused",
+          "ok": true
+        },
+        {
+          "name": "identical inserted editor changes ordinal and is refused",
+          "ok": true
+        },
+        {
+          "name": "disabled ancestor fieldset is refused",
+          "ok": true
+        },
+        {
+          "name": "textarea: multiline, Unicode, input event and undo",
+          "ok": true
+        },
+        {
+          "name": "real Ace: multiline, Unicode, undo and read-only",
+          "ok": true,
+          "version": "1.44.0"
+        }
+      ],
+      "errors": [],
+      "failedRequests": [],
+      "finalUrl": "http://127.0.0.1:8766/tests/browser.html"
+    },
+    "boundary": "Local browser fixtures with test-only Chrome API bridge; not native extension permissions or live CodeTantra."
+  }
+}

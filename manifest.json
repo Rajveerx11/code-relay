@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Practice Program Import \u2014 V1",
+  "version": "1.0.1",
+  "description": "Preview and import your own VS Code files into permitted practice editors. No exam/proctoring bypass.",
+  "minimum_chrome_version": "106",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "optional_permissions": [
+    "clipboardRead"
+  ],
+  "action": {
+    "default_popup": "extension/popup.html",
+    "default_title": "Import my program"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'"
+  }
+}

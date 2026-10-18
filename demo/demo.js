@@ -1,0 +1,1 @@
+let updates=0; document.querySelector('#program').addEventListener('input',()=>{document.querySelector('#events').textContent=`Editor updates: ${++updates}`;});

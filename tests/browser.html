@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Program Import Practice Test</title><body><h1>Local practice editor test</h1><div id="fixture"></div><pre id="results">Ready</pre><script type="module">
+window.runTests = async () => {
+  const results = [];
+  try {
+    const {pageEditor} = await import('../extension/editor-adapter.mjs');
+    const url = location.href;
+    const invoke = (operation, args={}) => pageEditor({operation, approvedUrl:url, consent:true, ...args});
+    fixture.innerHTML = '<label for="code">Code</label><textarea id="code" rows="8" cols="65"></textarea>';
+    const el = document.getElementById('code');
+    el.value = 'start\nfinish'; el.setSelectionRange(6,6);
+    let inputs = 0; el.addEventListener('input',()=> inputs++);
+    const inspection = invoke('inspect');
+    if (!inspection.ok || inspection.editors.length !== 1) throw Error('did not discover the visible textarea');
+    const snapshot = invoke('snapshot', {target:inspection.editors[0].target});
+    if (!snapshot.ok) throw Error('snapshot failed');
+    const text = '\tprint("hello 😀");\n';
+    const inserted = invoke('insert', {target:snapshot.target, expected:snapshot.snapshot, text, mode:'selection'});
+    if (!inserted.ok || el.value !== 'start\n'+text+'finish' || inputs !== 1) throw Error('multiline insertion/input event failed');
+    const undone = invoke('undo', {target:snapshot.target, expected:inserted.snapshot, restore:snapshot.snapshot});
+    if (!undone.ok || el.value !== 'start\nfinish' || el.selectionStart !== 6 || inputs !== 2) throw Error('undo failed');
+    results.push({name:'textarea: multiline, Unicode, input event and undo',ok:true});
+  } catch(e) { results.push({name:'textarea: multiline, Unicode, input event and undo',ok:false,error:e.message}); }
+  try {
+    if (!window.ace) await new Promise((resolve,reject) => { const s=document.createElement('script'); s.src='https://ace.c9.io/build/src/ace.js'; s.onload=resolve; s.onerror=()=>reject(Error('Official Ace test library could not load')); document.head.append(s); });
+    const {pageEditor} = await import('../extension/editor-adapter.mjs');
+    fixture.innerHTML = '<div id="ace-code" style="width:600px;height:200px"></div>';
+    const editor = ace.edit('ace-code'); editor.session.setUseWorker(false); editor.setValue('first\nlast',-1); editor.moveCursorTo(1,0);
+    const invoke = (operation,args={})=>pageEditor({operation,approvedUrl:location.href,consent:true,...args});
+    const inspection=invoke('inspect');
+    if (!inspection.ok || inspection.editors[0]?.kind !== 'ace') throw Error('exposed Ace editor not discovered');
+    const snapshot=invoke('snapshot',{target:inspection.editors[0].target});
+    const text='\tprint("hello 😀");\n';
+    const inserted=invoke('insert',{target:snapshot.target,expected:snapshot.snapshot,text,mode:'selection'});
+    if (!inserted.ok || editor.getValue() !== 'first\n'+text+'last') throw Error('Ace multiline insertion failed: '+(inserted.error||''));
+    const undone=invoke('undo',{target:snapshot.target,expected:inserted.snapshot,restore:snapshot.snapshot});
+    if (!undone.ok || editor.getValue() !== 'first\nlast') throw Error('Ace undo failed');
+    editor.setReadOnly(true);
+    const readonly=invoke('insert',{target:snapshot.target,expected:snapshot.snapshot,text,mode:'selection'});
+    if (readonly.ok || editor.getValue() !== 'first\nlast') throw Error('Ace read-only protection failed');
+    results.push({name:'real Ace: multiline, Unicode, undo and read-only',ok:true,version:ace.version});
+    editor.destroy(); fixture.innerHTML='';
+  } catch(e) { results.push({name:'real Ace: multiline, Unicode, undo and read-only',ok:false,error:e.message}); }
+  document.getElementById('results').textContent = JSON.stringify(results,null,2);
+  return results;
+};
+</script></body></html>
