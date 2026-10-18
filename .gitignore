@@ -1,0 +1,24 @@
+# Local credentials and environment configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local agent state and review artifacts
+.pi/
+.pi-subagents/
+.ocr/
+
+# Development dependencies and generated output
+node_modules/
+test-results/
+playwright-report/
+artifacts/
+*.zip
+__pycache__/
+*.py[cod]
+
+# OS metadata
+.DS_Store
+Thumbs.db

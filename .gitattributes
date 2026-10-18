@@ -1,0 +1,2 @@
+# Keep source and checksum inputs stable across Windows and Linux checkouts.
+* text=auto eol=lf
