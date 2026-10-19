@@ -102,14 +102,20 @@ The function must remain **self-contained**: Chrome's function serialization doe
 
 ## Editor abstraction
 
-The adapter builds a document-local array of candidates from `textarea, .ace_editor`. Candidates need a connected, nonzero layout rectangle and visible ancestry; hidden attributes, `aria-hidden`, collapsed/hidden visibility and zero opacity exclude them. Textarea implementation inputs inside Ace, Monaco and CodeMirror are excluded.
+The adapter builds a document-local array of candidates from `textarea, .ace_editor, .cm-editor`. Candidates need a connected, nonzero layout rectangle and visible ancestry; hidden attributes, `aria-hidden`, collapsed/hidden visibility and zero opacity exclude them. Textarea implementation inputs inside Ace, Monaco and CodeMirror are excluded.
 
 Each supported editor is wrapped in a small local interface: read value/selection, replace a range, restore selection, determine newline/size limits, report readonly status and notify the application.
 
 - **Textarea:** uses `setRangeText()` and `setSelectionRange()`, respects readonly/disabled state including disabled fieldsets, honors `maxLength` within the global limit, and dispatches a bubbling `input` event.
 - **Ace:** requires an exposed `element.env.editor` with the expected document/selection APIs. Uses Ace position/index conversion, session range replacement, selection ranges, newline format and undo-group boundaries. Ace's APIs perform its own notifications.
 
-Unsupported editor internals are not guessed. The adapter does not synthesize typing, re-enable paste, submit forms or change monitoring controls.
+- **CodeMirror 6:** bootstrap only from the matched wrapper's single `.cm-content` using `cmView.rootView.view` (view 6.36.5) or `cmTile.root.view` (view 6.41.0). These links are **internal and version-sensitive**, not a compatibility promise. Validate the candidate's public `constructor.findFromDOM(wrapper)` result, exact `dom`/`contentDOM`, connected visible nodes, state/document/selection APIs and dispatch before offering it. Reject conflicting links, inaccessible APIs and multiple selections. Both `state.readOnly` and `EditorView.editable` plus DOM readonly/disabled flags and effective `contentDOM.isContentEditable` apply. There is no page-global search or DOM mutation fallback.
+
+CM6 snapshots use `state.doc.toString()` (the full model, not virtualized rendered lines). Model positions count LF even for a CRLF-configured state. Incoming text is normalized to canonical LF; before dispatch it is converted to the configured `state.lineBreak` and then to `Text` via `state.toText()`. The inserted Text's verified length determines the cursor. Undo restores text and the original backward/forward selection in one dispatch; native Ctrl+Z semantics are not promised. CodeMirror 5, Monaco and private/incompatible instances remain unsupported. Detection failures expose only a boolean capability flag to the popup; diagnostic entries use fixed vocabulary, not labels, URLs or source.
+
+Primary references: [EditorView API](https://codemirror.net/docs/ref/#view.EditorView), [EditorState API](https://codemirror.net/docs/ref/#state.EditorState), upstream [6.36.5 findFromDOM](https://github.com/codemirror/view/blob/6.36.5/src/editorview.ts#L1148) and [6.41.0 findFromDOM](https://github.com/codemirror/view/blob/6.41.0/src/editorview.ts#L1194). These inspected versions justify only the guarded bootstrap, not all versions or live CodeTantra support.
+
+The adapter does not synthesize typing, re-enable paste, submit forms or change monitoring controls.
 
 ## Discovery and document routing
 
@@ -133,6 +139,8 @@ value
 start, end, direction
 identity = [element id, name, kind, label, node token]
 ```
+
+For CM6, identity additionally includes tokens on the view owner and content DOM node. Replacing a view on the same wrapper, or replacing the content node, cannot inherit the old snapshot.
 
 The node token is a UUID held on the actual DOM node through a non-enumerable `Symbol.for('practice-program-import.editor-identity.v1')` property. Separate injected calls can recognize the same node, while ordinary DOM cloning/replacement does not copy that token.
 
@@ -181,9 +189,11 @@ The delayed samples occur roughly 150 ms and 750 ms after the write, subject to 
 | Diagnostics | `tests/diagnostics.test.mjs`, `tests/popup-diagnostics.test.mjs`: vocabulary/redaction, bounded retention, clear/export/cleanup and actual controller success/failure/check logging with small fakes. |
 | Popup wiring | `tests/popup.test.mjs`: fake DOM/Chrome APIs, state and error invalidation. |
 | Frame routing | `tests/frames.test.mjs`: fake frame/document responses, focus, navigation and denied access. |
-| Serialization integration | `tests/roundtrip.test.mjs`: actual popup and serialized adapter in separate JS contexts with sorted-key transport; fake textarea/Ace. |
+| Serialization integration | `tests/roundtrip.test.mjs`: actual popup and serialized adapter in separate JS contexts with sorted-key transport; fake textarea/Ace/CM6, including both delayed-reset samples. |
 | Package layout | `tests/package.test.mjs`: root manifest, permissions, imports, paths and DOM IDs. |
 | Browser fixtures | `tests/browser.html`, `tests/safety.html`, `tests/ui.html`: real DOM exercises; popup uses `tests/bridge.js`, not native extension grants. `tests/saved-file.mjs` adds file-flow checks. |
+
+`tests/cm6-browser.html` / `tests/cm6-browser.mjs` load pinned real view 6.36.5 and 6.41.0 with state 6.6.0 from esm.sh. The fixture tests virtualized text, CRLF/Unicode offsets, backwards undo, explicit target selection, readonly/editable, stale nodes, filtered transactions and actual popup delayed checks through a test-only bridge. It is not native extension or live tenant evidence.
 
 `tests/browser.html` loads the real Ace library from `https://ace.c9.io/build/src/ace.js`; this optional fixture has an external network dependency, unlike the production extension. Fixture functions are invoked explicitly (for example, `runTests()`, `runSafetyTests()` and `runUI()`).
 

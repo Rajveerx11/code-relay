@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createContext,runInContext} from 'node:vm';
 import {webcrypto} from 'node:crypto';
+import {cm6Fake} from './cm6-fake.mjs';
 
 function transport(value){
  if(Array.isArray(value))return value.map(transport);
@@ -14,6 +15,14 @@ function transport(value){
 function element(){return {value:'',checked:false,disabled:false,hidden:false,textContent:'',dataset:{},options:[],listeners:{},
  addEventListener(type,fn){this.listeners[type]=fn;},replaceChildren(){this.options=[];},append(child){this.options.push(child);}};}
 function page(kind){
+ if(kind==='codemirror6'){
+  const fake=cm6Fake({link:'cmTile'});fake.view.set('abcXYZdef',3,6);
+  const node={get value(){return fake.view.state.doc.toString();},set value(value){fake.view.set(value,0,0);},
+   get selectionStart(){return fake.view.state.selection.ranges[0].from;},get selectionEnd(){return fake.view.state.selection.ranges[0].to;}};
+  const context=createContext({URL,crypto:webcrypto,Event,location:{href:'https://practice.example/editor'},document:fake.document,
+   getComputedStyle:()=>({display:'block',visibility:'visible'})});
+  return {node,context,fake};
+ }
  const node={id:'code',value:'abcXYZdef',selectionStart:3,selectionEnd:6,selectionDirection:'forward',maxLength:-1,
   classList:{contains:cls=>kind==='ace'&&cls==='ace_editor'},getClientRects:()=>[{width:400,height:200}],closest:()=>null,getAttribute:()=>null,matches:()=>false,
   setRangeText(text,start,end){this.value=this.value.slice(0,start)+text+this.value.slice(end);this.selectionStart=this.selectionEnd=start+text.length;},
@@ -35,7 +44,7 @@ function page(kind){
 }
 let popupSequence=0;
 async function popup(kind,onResult=()=>{}){
- const {node,context}=page(kind);
+ const {node,context,fake}=page(kind);
  const html=readFileSync(new URL('../extension/popup.html',import.meta.url),'utf8');
  const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],element()]));
  nodes.mode.value='selection';nodes.preview.value='new\nनमस्ते';nodes.consent.checked=true;
@@ -45,13 +54,13 @@ async function popup(kind,onResult=()=>{}){
   calls.push(input);
   context.request=JSON.parse(JSON.stringify(transport(input.args[0])));
   const result=runInContext(`(${input.func.toString()})(request)`,context);
-  onResult({node,context,operation:input.args[0].operation,result});
+  onResult({node,context,fake,operation:input.args[0].operation,result});
   return JSON.parse(JSON.stringify(transport([{frameId:0,documentId:'doc-1',result}])));
  }}};
  await import(`../extension/popup.mjs?roundtrip=${++popupSequence}`);
  return {node,context,nodes,calls,click:id=>nodes[id].listeners.click()};
 }
-for(const kind of ['textarea','ace'])test(`${kind}: real popup/adapter import and undo survive sorted transport keys`,async()=>{
+for(const kind of ['textarea','ace','codemirror6'])test(`${kind}: real popup/adapter import and undo survive sorted transport keys`,async()=>{
  const {node,nodes,calls,click}=await popup(kind);
  await click('inspect');assert.equal(nodes.insert.disabled,false,nodes.status.textContent);
  await click('insert');assert.equal(nodes.status.dataset.error,'false',nodes.status.textContent);
@@ -87,4 +96,25 @@ for(const failure of ['reset','replace','hide'])test(`does not report success wh
  assert.equal(nodes.insert.disabled,true);assert.equal(nodes.undo.disabled,true);
  assert.equal(calls.filter(c=>c.args[0].operation==='insert').length,1,'no retry or rollback');
  if(failure==='reset')assert.equal(node.value,'abcXYZdef');
+});
+for(const sample of [1,2])test(`CM6 popup delayed sample ${sample} detects a site reset without retry/rollback`,async()=>{
+ let checks=0,writes=0;
+ const {nodes,calls,click}=await popup('codemirror6',({fake,operation})=>{
+  if(operation==='insert'){writes++;if(sample===1)fake.view.set('reset by site',0,0);}
+  if(operation==='verify' && ++checks===1 && sample===2)fake.view.set('reset by site',0,0);
+ });
+ await click('inspect');await click('insert');
+ assert.equal(nodes.status.dataset.error,'true');assert.equal(writes,1);
+ assert.ok(nodes.diagnosticReport.textContent.includes(`| verify-${sample} | failed | verification-failed |`));
+ assert.equal(calls.filter(c=>c.args[0].operation==='verify').length,sample);
+ assert.equal(nodes.undo.disabled,true);
+});
+test('CM6 unsupported capability is actionable and diagnostics contain fixed vocabulary only',async()=>{
+ const {nodes,click}=await popup('codemirror6',({fake,operation,result})=>{
+  if(operation==='inspect'){delete fake.content.cmTile;result.editors=[];result.unsupportedCM6=true;}
+ });
+ await click('inspect');assert.match(nodes.status.textContent,/CodeMirror 6 markup detected/);
+ assert.match(nodes.diagnosticReport.textContent,/cm6-unavailable/);
+ assert.doesNotMatch(nodes.diagnosticReport.textContent,/abcXYZdef|practice\.example|cmTile/);
+ assert.equal(nodes.insert.disabled,true);
 });

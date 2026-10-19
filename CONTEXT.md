@@ -79,7 +79,8 @@ There is no dependency-install step. In a shell without wildcard expansion, pass
 
 ## Supported behavior and limits
 
-- Visible native textareas and Ace editors exposing `element.env.editor` with the required APIs.
+- Visible native textareas, Ace editors exposing `element.env.editor`, and CodeMirror 6 views with validated model/dispatch APIs and exactly one selection.
+- CM6 discovery uses version-sensitive DOM links, then verifies the matching wrapper/content/view through public `findFromDOM`. Unsupported/private instances fail closed; text is never written directly into the editor DOM. Local real-library coverage includes view 6.36.5 and 6.41.0; this does not establish live CodeTantra compatibility.
 - Top-level pages and accessible, visible same-origin frames, including nested frames.
 - Focused writable target preferred; ambiguous targets require explicit selection. The first 1,000 characters of the selected target are shown for confirmation.
 - UTF-8 saved-file loading, optional clipboard reading, and manual preview editing. Filename extensions are not enforced by the implementation.
@@ -89,7 +90,7 @@ There is no dependency-install step. In a shell without wildcard expansion, pass
 - Temporary single-level extension undo, lost when the popup closes or its target/backup is cleared. Do not promise native Ctrl+Z support.
 - Immediate read-back plus two delayed checks, after about 150 ms and another 600 ms. No automatic write retry or rollback.
 
-Unsupported: Monaco, CodeMirror, private/inaccessible Ace instances, cross-origin or inaccessible/sandboxed frames, hidden targets, `about:blank`/`srcdoc` frames, and detected assessment/proctoring pages. Detection is heuristic; user authorization is still required.
+Unsupported: Monaco, CodeMirror 5, private/incompatible CM6 or Ace instances, CM6 multiple selections, cross-origin or inaccessible/sandboxed frames, hidden targets, `about:blank`/`srcdoc` frames, and detected assessment/proctoring pages. Detection is heuristic; user authorization is still required.
 
 ## Permission and privacy boundaries
 
@@ -118,4 +119,4 @@ Existing checksums and verification records describe the prior bundle. If produc
 
 ## Tracked next work
 
-GitHub issues #1–#2 cover the Windows test/CI foundation. Remaining work is tracked separately: #3 installed-extension browser tests, #4 authorized CodeTantra compatibility, #5 application persistence, #6 read-only diagnostics, #7 undo UX, and #8 release artifacts. Issue #10 implements only the privacy-safe execution-log slice; #6 remains open for compatibility diagnostics. Issues #4–#5 require authorized site evidence; do not infer CodeTantra internals or claim live compatibility from local fixtures.
+GitHub issues #1–#2 cover the Windows test/CI foundation. Remaining work is tracked separately: #3 installed-extension browser tests, #4 authorized CodeTantra compatibility, #5 application persistence, #6 read-only diagnostics, #7 undo UX, and #8 release artifacts. Issue #10 implements only the privacy-safe execution-log slice; #6 remains open for compatibility diagnostics. Issue #12 adds narrowly validated CM6 support, regression fixtures and a safe `cm6-unavailable` diagnostic; #4 remains open until the actual authorized CodeTantra page is verified. Issues #4–#5 require authorized site evidence; do not infer CodeTantra internals or claim live compatibility from local fixtures.

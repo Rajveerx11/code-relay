@@ -185,8 +185,13 @@ $('inspect').addEventListener('click',()=>guarded('inspect',async()=>{
     }
   }
   if(warning)record('inspect','warning','frames-unavailable');
+  const unsupportedCM6=frames.some(frame=>frame.result?.ok && frame.result.unsupportedCM6===true);
+  if(unsupportedCM6){
+    record('inspect','warning','cm6-unavailable');
+    warning+=' CodeMirror 6 markup detected, but its view or single selection could not be validated. Use one selection in a visible permitted practice editor and inspect again. Private or incompatible instances are unsupported; ask the site for an approved import method.';
+  }
   const writable=state.editors.map((editor,index)=>({...editor,index})).filter(editor=>!editor.readOnly);
-  if(!writable.length)throw failure('No supported writable editor found in the main page or accessible same-origin frames. Supported: textareas and exposed Ace editors. Monaco, CodeMirror and private Ace instances are unsupported.'+warning,'target-unavailable');
+  if(!writable.length)throw failure('No supported writable editor found in the main page or accessible same-origin frames. Supported: textareas, exposed Ace and validated CodeMirror 6 editors. Monaco, CodeMirror 5 and private/incompatible instances are unsupported.'+warning,unsupportedCM6?'cm6-unavailable':'target-unavailable');
   const focused=writable.filter(editor=>editor.focused);
   const candidate=focused.length===1?focused[0]:writable.length===1?writable[0]:null;
   if(!candidate){
@@ -195,7 +200,7 @@ $('inspect').addEventListener('click',()=>guarded('inspect',async()=>{
   }
   $('target').value=String(candidate.index);await selectEditor(candidate.index);
   status(`Selected ${targetName()}. Check Target contents below before importing.${warning}`);
-  if(warning)return {status:'warning',category:'frames-unavailable'};
+  if(warning)return {status:'warning',category:unsupportedCM6?'cm6-unavailable':'frames-unavailable'};
 }));
 $('target').addEventListener('change',()=>guarded(null,async()=>{
   if($('target').value==='')return;
