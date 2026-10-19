@@ -67,6 +67,8 @@ test('ambiguous targets require an explicit choice rather than writing the first
  const {nodes,calls,click}=await popup({topEditor:true});
  await click('inspect');assert.equal(nodes.insert.disabled,true);assert.equal(nodes.target.disabled,false);
  assert.equal(nodes.targetCode.value,'');assert.match(nodes.status.textContent,/Multiple writable editors/);
+ assert.match(nodes.diagnosticReport.textContent,/\| inspect \| warning \| target-choice \|/);
+ assert.doesNotMatch(nodes.diagnosticReport.textContent,/\| inspect \| success \|/);
  assert.equal(calls.filter(call=>call.args[0].operation==='snapshot').length,0);
  nodes.target.value='1';await nodes.target.listeners.change();
  assert.equal(nodes.insert.disabled,false);assert.equal(calls.at(-1).target.documentIds[0],'child-doc');
@@ -82,6 +84,9 @@ test('inaccessible frames give an actionable error, while an available top edito
  for(const topEditor of [false,true]){
   const {nodes,click}=await popup({denied:true,topEditor});await click('inspect');
   assert.match(nodes.status.textContent,/Cross-origin\/restricted frames/);assert.equal(nodes.insert.disabled,!topEditor);
+  assert.match(nodes.diagnosticReport.textContent,/\| inspect \| warning \| frames-unavailable \|/);
+  assert.doesNotMatch(nodes.diagnosticReport.textContent,/\| inspect \| success \|/);
+  if(!topEditor)assert.match(nodes.diagnosticReport.textContent,/\| inspect \| failed \| target-unavailable \|/);
  }
 });
 test('denied and cross-origin frame results are never offered',async()=>{

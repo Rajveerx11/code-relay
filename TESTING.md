@@ -1,6 +1,18 @@
 # Verification
 
-## Current repository foundation checks
+## Execution diagnostics (#10)
+
+Current local validation on Windows, Node v24.19.0:
+
+- `node --test tests/*.test.mjs`: **48/48 passed** after the PR review follow-up (initial diagnostics implementation: 47/47). New direct diagnostics tests cover fixed vocabulary (including hostile strings/objects), timestamp shape, 100-entry retention, clear, exact serialization/export and cleanup failures. Actual popup/controller tests cover safe file/clipboard failures, successful import/undo, both delayed checks, partial writes, unknown errors, observable global failures and diagnostic failures without workflow interruption. Existing frame and serialized-adapter tests also assert warning/failure/success logging. A new regression first failed when delayed verification discarded known safe reset/replacement explanations; it now proves those explanations survive in workflow status while the report remains category-only and unknown errors remain generic.
+- `node --check extension/diagnostics.mjs` plus all existing production modules and edited/new test modules: passed. CI includes the new production module; no permissions or dependencies changed.
+- Browser-rendered tests: **15/15 passed**, installed Playwright 1.62.0 / Chromium 151.0.7922.34, **sandbox enabled**. Target: `http://127.0.0.1:8766/tests/ui.html`, viewports 1280×1000 and 520×900 (450px popup within a fixture iframe). Existing bridge UI/file/replace/undo flows passed. Diagnostics passed keyboard expansion/focus, privacy, clear, exact native Blob download vs preview, a real page reset after 300 ms failing check 2, a real partial mutation/throw, generic error/rejection events, export-failure containment and empty logs in a new popup realm. No page/console errors or failed requests in the final run. Screenshots were inspected: report wraps within the popup, scrolls at a bounded height, and both controls and lifetime/privacy notices are visible.
+- Reproduction script and artifacts are local, outside the repository: `C:/Users/rajve/AppData/Local/Temp/code-relay-diagnostics-browser.cjs` and `C:/Users/rajve/AppData/Local/Temp/code-relay-diagnostics-browser/` (`results.json`, `export.txt`, `diagnostics-1280.png`, `diagnostics-520.png`). Command: `NODE_PATH='C:/Users/rajve/.codex/skills/playwright-skill/node_modules' node 'C:/Users/rajve/.agents/skills/playwright-skill/run.js' 'C:/Users/rajve/AppData/Local/Temp/code-relay-diagnostics-browser.cjs'`. The runner reused installed dependencies; nothing was installed. Its task-owned server/browser were closed afterwards.
+- LSP diagnostics are blocked: the delegated toolset has no LSP tool and `typescript-language-server` is unavailable. Syntax and runtime checks are not a substitute for LSP diagnostics.
+
+These are **bridge fixtures, not installed-extension or live CodeTantra verification**. Native extension permissions/download behavior, actual CodeTantra execution, saving/submission and later site changes remain unverified. Closing a real Chrome popup was not tested; a new fixture popup realm was checked for fresh memory. Independent OCR review and CodeRabbit remain publication gates owned by the parent task. Issue #6 remains open; this is only its execution-log slice. Historical evidence below and the checksum/verification files remain untouched.
+
+## Repository foundation checks (prior change)
 
 The Windows packaging regression is fixed with platform-independent `basename()` matching. Local validation on Windows, Node v24.19.0:
 

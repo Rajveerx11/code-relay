@@ -58,6 +58,8 @@ for(const kind of ['textarea','ace'])test(`${kind}: real popup/adapter import an
  assert.equal(node.value,'abcnew\nनमस्तेdef');assert.equal(nodes.undo.disabled,false);
  await click('undo');assert.equal(node.value,'abcXYZdef');assert.equal(node.selectionStart,3);assert.equal(node.selectionEnd,6);
  assert.equal(nodes.status.dataset.error,'false',nodes.status.textContent);
+ for(const action of ['import','verify-1','verify-2','undo'])assert.ok(nodes.diagnosticReport.textContent.includes(`| ${action} | success | completed |`));
+ assert.doesNotMatch(nodes.diagnosticReport.textContent,/abcXYZdef|नमस्ते|practice\.example|token/);
  assert.equal(calls.filter(call=>call.args[0].operation==='insert').length,1);
  // Real changes must still fail and clear stale popup actions after the fix.
  node.value='changed by site';await click('insert');
@@ -79,6 +81,9 @@ for(const failure of ['reset','replace','hide'])test(`does not report success wh
  await click('inspect');await click('insert');
  assert.equal(nodes.status.dataset.error,'true',nodes.status.textContent);
  assert.doesNotMatch(nodes.status.textContent,/Code imported/);
+ assert.match(nodes.diagnosticReport.textContent,/\| verify-1 \| failed \| verification-failed \|/);
+ assert.match(nodes.diagnosticReport.textContent,/\| import \| failed \| verification-failed \|/);
+ assert.doesNotMatch(nodes.diagnosticReport.textContent,/\| import \| success \|/);
  assert.equal(nodes.insert.disabled,true);assert.equal(nodes.undo.disabled,true);
  assert.equal(calls.filter(c=>c.args[0].operation==='insert').length,1,'no retry or rollback');
  if(failure==='reset')assert.equal(node.value,'abcXYZdef');
