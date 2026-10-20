@@ -1,6 +1,39 @@
 # Verification
 
-## Execution diagnostics (#10)
+## Default whole-editor replacement and formatting (#14)
+
+- Root cause: the old popup selected cursor/selection insertion by default. The existing confirmed full-replacement adapter already uses the full document range; its mutation code is unchanged in this follow-up.
+- The production-HTML default regression failed before changing the popup and now passes: replace mode explicitly selected, confirmation visible and unchecked, selection mode retained as opt-in.
+- Windows Node v24.19.0: `node --test tests/*.test.mjs` — **68/68 passed**. New serialized popup/adapter tests cover textarea, Ace and CM6 with both a cursor and partial selection, exact tabs/spaces/blank lines/trailing whitespace/newline/Unicode after BOM/CRLF normalization, confirmation gating, one import request, both delayed checks and undo.
+- Installed Playwright 1.62.0 / Chromium 151.0.7922.34, sandbox enabled: **47/47 browser checks passed** — 26 real CM6 checks (view 6.36.5 and 6.41.0 with state 6.6.0) and 21 legacy checks. The real popup defaults are exercised, not overridden to simulate replacement. Added real CM6 LF/CRLF full-document formatting equality and backward undo. Legacy textarea cursor insertion is explicitly selected separately. No page/console/request errors.
+- Node syntax checks and `git diff --check` passed. Production JavaScript/manifest/permissions are unchanged by this follow-up; only the popup HTML default/help copy changes runtime behavior. No formatter or dependency was added.
+- Local evidence: `C:/Users/rajve/AppData/Local/Temp/code-relay-replace-node-results.txt`, `code-relay-replace-browser-results.json`, and `code-relay-replace-popup.png` under the same Temp directory. The popup screenshot was inspected: default replacement and unchecked confirmation are visible. Native-extension/site saving behavior is still outside these bridge fixtures.
+- Original logo: `assets/code-relay-logo.svg`, rendered with sandboxed Chromium to the 512px `assets/code-relay-logo.png`; both were visually inspected. The README embeds the SVG and links the PNG. No external asset or font is loaded by the logo.
+
+The browser reproduction procedure below uses the current committed fixtures and therefore runs these newer checks. Historical counts below describe their respective earlier runs, not the current suite. LSP remains unavailable because `typescript-language-server` is missing; no clean LSP result is claimed.
+
+## Validated CodeMirror 6 practice editors (#12, prior change)
+
+Local Windows validation, Node v24.19.0:
+
+- Before editing production code, `node --test tests/cm6.test.mjs` reproduced the discovery failure: a CM6 wrapper with a validated accessible model returned **0 editors instead of 1**. The focused regression now passes.
+- `node --test tests/*.test.mjs`: **61/61 passed** after independent-review hardening (initial implementation: 60/60). A regression first reproduced writes into effectively non-editable DOM with mixed-case or removed `contenteditable`; both model and effective DOM editability are now checked, with real-library negative coverage on both versions. Added CM6 fake/API guards and serialized real-popup transport coverage: both DOM-link shapes, CRLF/Unicode offsets, backward selection restoration, view replacement on the same wrapper, content-node replacement, readonly/editable/DOM flags, multiselection, size/NUL limits, confirmation, filtered writes and both delayed reset samples. The unsupported-capability report uses fixed vocabulary without source, labels or URLs.
+- `node --check` on all production `.mjs` files plus new/edited CM6 and roundtrip modules, and `git diff --check`: passed. No production dependency, permission or manifest changes.
+- Installed Playwright **1.62.0** runner, sandbox-enabled Chromium **151.0.7922.34**: **22/22 CM6 cases passed**, eleven per real `@codemirror/view` **6.36.5** (`cmView`) and **6.41.0** (`cmTile`), sharing `@codemirror/state` **6.6.0**, which satisfies both view packages' declared state dependency ranges. The test-only esm.sh imports are pinned; an import map ensures one state module rather than incompatible duplicated bundles. The parent reran all 42 browser checks after correcting the initial fixture's out-of-range state 6.5.2 pairing for view 6.41.0. Cases include actual virtualized documents, LF/CRLF, Unicode, backward undo, multiple editors/selections, readonly and editable facets, stale nodes/links, transaction filters, and popup import/undo with both delayed checks and site resets at each sample. Same-wrapper owner replacement is covered with a controlled API fake, not claimed as a real-library lifecycle feature.
+- Existing browser fixtures also passed **20/20**: textarea, real Ace **1.45.0**, safety checks, popup clipboard/file/replace/undo. Final run: **42/42 total**, no page errors, console errors or failed requests. A test route serves an empty favicon; no browser security flags were disabled.
+- LSP remains blocked: no LSP tool in this worker and `command -v typescript-language-server` / `command -v lsp` found no available executable. Nothing was installed. Syntax/runtime checks do not replace LSP diagnostics.
+
+Reproduce the committed browser fixture: start `py -3 tools/serve.py --port 8766` (or `python3`), open `http://127.0.0.1:8766/tests/cm6-browser.html`, and run `await runCM6Tests()` in that local fixture's console. The result array and page output show every version/case; CDN/network failures are failures, not skipped successes. Optional automation used the installed skill runner:
+
+```sh
+node C:/Users/rajve/.agents/skills/playwright-skill/run.js C:/Users/rajve/AppData/Local/Temp/code-relay-cm6-playwright.cjs
+```
+
+That temporary runner accepts `CM6_URL` and `CM6_OUTPUT`. Evidence: `C:/Users/rajve/AppData/Local/Temp/code-relay-cm6-browser-results.json`. The reproducible fixture is in `tests/cm6-browser.html` and `tests/cm6-browser.mjs`; the runner is local evidence, not a production dependency.
+
+These are **local real-library and test-bridge results, not native installed-extension or live CodeTantra evidence**. User retesting on an authorized practice page remains necessary. No clipboard/assessment restrictions were bypassed. Native Ctrl+Z, permissions, saving/submission, incompatible/private instances, future internal-link changes and resets after the bounded checks remain unverified. Independent OCR/CodeRabbit and publication gates belong to the parent task. Historical results below, `CHECKSUMS.sha256` and `VERIFICATION.json` are unchanged historical evidence; historical statements that all CodeMirror versions are unsupported are superseded only by this narrowly validated CM6 support.
+
+## Execution diagnostics (#10, prior change)
 
 Current local validation on Windows, Node v24.19.0:
 

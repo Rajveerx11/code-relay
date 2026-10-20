@@ -8,6 +8,7 @@ const messages=Object.freeze({
   completed:'Action completed; saving and submission are not verified.',
   'target-choice':'Choose a target before importing.',
   'frames-unavailable':'Some embedded frames could not be inspected.',
+  'cm6-unavailable':'CodeMirror 6 markup detected, but a compatible accessible view with one selection could not be validated. Use a permitted practice editor or the site-approved import method.',
   'input-invalid':'Input was rejected; review the source limits.',
   'file-read':'File could not be read as UTF-8.',
   'clipboard-access':'Clipboard permission, reading or text validation failed.',

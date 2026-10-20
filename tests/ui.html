@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><title>Program Import UI Practice Test</title><body><h1>Local Practice Editor</h1><label for="code">My program</label><textarea id="code" rows="12" cols="60"></textarea><iframe id="popup" title="Extension popup" style="width:480px;height:840px;border:1px solid #aaa"></iframe><pre id="results"></pre><script type="module">
-window.sampleCode='\tconsole.log("hello 😀");\n';
+window.sampleCode='\tif (ready) {\n    console.log("hello 😀");  \n\n}\n';
 window.clipboardFails=false;
 window.executeForTest=(func,args)=>({frameId:0,documentId:'local-demo-document',result:(0,eval)(`(${func.toString()})(${JSON.stringify(args[0])})`)});
 window.runUI=async()=>{
@@ -12,10 +12,21 @@ window.runUI=async()=>{
   const doc=popup.contentDocument;
   const until=async(fn)=>{const end=Date.now()+10000;while(!fn()){if(Date.now()>end)throw Error('UI state timed out: '+doc.getElementById('status')?.textContent);await new Promise(r=>setTimeout(r,30));}};
   await until(()=>doc.getElementById('inspect')?.disabled===false);
+  if(doc.getElementById('mode').value!=='replace'||doc.getElementById('replaceRow').hidden||doc.getElementById('replaceConfirmed').checked)throw Error('default replacement confirmation is incorrect');
   code.value='start\nend';code.setSelectionRange(6,6);
   doc.getElementById('consent').click();doc.getElementById('inspect').click();
   await until(()=>doc.getElementById('target').options.length===1 && !doc.getElementById('readClipboard').disabled);
-  doc.getElementById('readClipboard').click(); await until(()=>doc.getElementById('preview').value===sampleCode && !doc.getElementById('insert').disabled);
+  doc.getElementById('readClipboard').click(); await until(()=>doc.getElementById('preview').value===sampleCode && !doc.getElementById('readClipboard').disabled);
+  if(!doc.getElementById('insert').disabled)throw Error('default replacement not gated');
+  doc.getElementById('insert').click();if(code.value!=='start\nend')throw Error('unconfirmed replacement mutated code');
+  doc.getElementById('replaceConfirmed').click();doc.getElementById('insert').click();
+  await until(()=>code.value===sampleCode && !doc.getElementById('undo').disabled);
+  doc.getElementById('undo').click();await until(()=>code.value==='start\nend' && !doc.getElementById('inspect').disabled);
+  if(code.selectionStart!==6||code.selectionEnd!==6)throw Error('full replacement undo lost cursor');
+  report.push({name:'popup: default confirmed full replacement preserves exact formatting and undo',ok:true});
+  // Cursor insertion remains opt-in; exercise it separately from the default.
+  doc.getElementById('replaceConfirmed').checked=false;
+  doc.getElementById('mode').value='selection';doc.getElementById('mode').dispatchEvent(new doc.defaultView.Event('input',{bubbles:true}));
   doc.getElementById('insert').click();await until(()=>code.value==='start\n'+sampleCode+'end' && !doc.getElementById('undo').disabled);
   doc.getElementById('undo').click();await until(()=>code.value==='start\nend' && !doc.getElementById('readClipboard').disabled);
   report.push({name:'popup: inspect, clipboard preview, insertion and undo (Chrome API test bridge)',ok:true});

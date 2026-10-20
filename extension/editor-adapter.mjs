@@ -41,9 +41,52 @@ export function pageEditor(request) {
       }
     }
     if (request.operation === 'validate') return {ok:true,url:current};
-    const candidates = [...document.querySelectorAll('textarea, .ace_editor')].filter(el => visible(el) &&
-      (el.classList.contains('ace_editor') || (!el.matches('.ace_text-input, .ime-text-area') && !el.closest('.ace_editor, .monaco-editor, .CodeMirror, .cm-editor'))));
+    let unsupportedCM6=false;
+    const candidates = [...document.querySelectorAll('textarea, .ace_editor, .cm-editor')].filter(el => visible(el) &&
+      (el.classList.contains('ace_editor') || el.classList.contains('cm-editor') || (!el.matches('.ace_text-input, .ime-text-area') && !el.closest('.ace_editor, .monaco-editor, .CodeMirror, .cm-editor'))));
     const adapters = candidates.flatMap(el => {
+      if (el.classList.contains('cm-editor')) {
+        // Version-sensitive bootstrap ONLY from this wrapper's content node:
+        // view 6.36.5 uses cmView, 6.41.0 uses cmTile. Neither is a public API.
+        // Validate ownership via public findFromDOM before using state/dispatch;
+        // unfamiliar/private instances fail closed, never fall back to DOM edits.
+        try {
+          const contents=[...el.querySelectorAll('.cm-content')];
+          if (contents.length!==1) throw Error();
+          const content=contents[0];
+          const older=content.cmView?.rootView?.view,newer=content.cmTile?.root?.view;
+          if (older && newer && older!==newer) throw Error();
+          const view=older || newer,View=view?.constructor,state=view?.state;
+          if (!view || typeof View?.findFromDOM!=='function' || !View.editable ||
+              View.findFromDOM(el)!==view || view.dom!==el || view.contentDOM!==content ||
+              content.closest('.cm-editor')!==el || !visible(content) ||
+              typeof view.dispatch!=='function' || typeof state?.doc?.toString!=='function' ||
+              !Number.isInteger(state.doc.length) || state.doc.length<0 || typeof state.readOnly!=='boolean' ||
+              typeof state.facet!=='function' || typeof state.facet(View.editable)!=='boolean' ||
+              typeof state.toText!=='function' || typeof state.lineBreak!=='string' || !state.lineBreak.length) throw Error();
+          const ranges=state.selection?.ranges,r=ranges?.[0];
+          if (!Array.isArray(ranges) || ranges.length!==1 || !r ||
+              ![r.from,r.to,r.anchor,r.head].every(n=>Number.isInteger(n) && n>=0 && n<=state.doc.length) ||
+              r.from!==Math.min(r.anchor,r.head) || r.to!==Math.max(r.anchor,r.head)) throw Error();
+          const value=state.doc.toString(); // Canonical LF text, including virtualized lines.
+          if (typeof value!=='string' || value.length!==state.doc.length) throw Error();
+          const blocked=node=>node.readOnly || node.disabled || node.matches(':disabled') ||
+            node.hasAttribute('readonly') || node.hasAttribute('disabled') ||
+            node.getAttribute('aria-readonly')==='true' || node.getAttribute('aria-disabled')==='true';
+          return [{el,owner:view,content,kind:'codemirror6',
+            readonly:()=>view.state.readOnly || !view.state.facet(View.editable) || blocked(el) || blocked(content) || content.isContentEditable!==true,
+            value:()=>view.state.doc.toString(),
+            selection:()=>{const range=view.state.selection.ranges[0];return {start:range.from,end:range.to,direction:range.anchor>range.head?'backward':'forward'};},
+            replace:(text,start,end,restore)=>{
+              // Model offsets always count LF as one, even with a CRLF lineSeparator.
+              const insert=view.state.toText(text.replace(/\n/g,view.state.lineBreak));
+              if (insert.length!==text.length || insert.toString()!==text) throw Error();
+              const selection=restore ? {anchor:restore.direction==='backward'?restore.end:restore.start,head:restore.direction==='backward'?restore.start:restore.end} : {anchor:start+insert.length};
+              view.dispatch({changes:{from:start,to:end,insert},selection});
+            },
+            newline:()=> '\n',limit:()=>200000,notify:()=>{}}];
+        } catch { unsupportedCM6=true; return []; }
+      }
       if (el.classList.contains('ace_editor')) {
         const editor=el.env?.editor;
         if (!editor?.session?.doc?.positionToIndex || !editor.selection?.setSelectionRange || typeof editor.getReadOnly !== 'function') return [];
@@ -61,7 +104,7 @@ export function pageEditor(request) {
     });
     const describe = (a,index) => ({target:index,kind:a.kind,label:a.el.labels?.[0]?.textContent?.trim().slice(0,100) || a.el.getAttribute('aria-label') || a.el.id || `Editor ${index+1}`,readOnly:!!a.readonly(),characters:a.value().length,
       focused:activeFrame && !!document.activeElement && (document.activeElement===a.el || !!a.el.contains?.(document.activeElement))});
-    if (request.operation === 'inspect') return {ok:true,url:current,editors:adapters.map(describe),frames:document.querySelectorAll('iframe, frame').length};
+    if (request.operation === 'inspect') return {ok:true,url:current,editors:adapters.map(describe),unsupportedCM6,frames:document.querySelectorAll('iframe, frame').length};
     if (!Number.isInteger(request.target) || !adapters[request.target]) return fail('Editor is unavailable. Inspect again.');
     const a=adapters[request.target],info=describe(a,request.target);
     if (info.readOnly) return fail('Editor is read-only or disabled; nothing changed.');
@@ -70,9 +113,15 @@ export function pageEditor(request) {
     // A non-enumerable symbol survives separate serialized MAIN-world calls on
     // this node, but is not copied by cloneNode or by HTML replacement.
     const identityKey=Symbol.for('practice-program-import.editor-identity.v1');
-    if (!Object.prototype.hasOwnProperty.call(a.el,identityKey))
-      Object.defineProperty(a.el,identityKey,{value:crypto.randomUUID()});
-    const snapshot=()=>({value:a.value(),...a.selection(),identity:[a.el.id,a.el.getAttribute('name')||'',info.kind,info.label,a.el[identityKey]]});
+    const identify=node=>{
+      if (!Object.prototype.hasOwnProperty.call(node,identityKey))
+        Object.defineProperty(node,identityKey,{value:crypto.randomUUID()});
+      return node[identityKey];
+    };
+    const identity=[a.el.id,a.el.getAttribute('name')||'',info.kind,info.label,identify(a.el)];
+    // Pin both view ownership and content DOM, not only a reusable wrapper.
+    if (a.owner) identity.push(identify(a.owner),identify(a.content));
+    const snapshot=()=>({value:a.value(),...a.selection(),identity});
     const before=snapshot();
     if (before.value.length>200000) return fail('Editor is too large for the 200,000-character V1 limit.');
     if (request.operation==='snapshot') return {ok:true,target:request.target,snapshot:before};
@@ -107,7 +156,8 @@ export function pageEditor(request) {
       if (!restore || typeof restore.value!=='string' || restore.value.length>200000 || JSON.stringify(restore.identity)!==JSON.stringify(before.identity)) return fail('Undo backup is invalid.');
       value=restore.value;
       mutationPossible=true;
-      a.replace(value,0,before.value.length); a.select(restore.start,restore.end,restore.direction);
+      // CM6 restores text and selection in one transaction; legacy APIs select separately.
+      a.replace(value,0,before.value.length,restore); a.select?.(restore.start,restore.end,restore.direction);
     } else return fail('Unknown operation.');
     a.notify();
     if (a.value()!==value) return fail('The application changed or rejected the imported value after insertion. The editor may have changed; inspect it again. No automatic rollback was performed.');
