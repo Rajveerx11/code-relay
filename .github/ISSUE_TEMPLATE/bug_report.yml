@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a reproducible problem using harmless practice content.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For vulnerabilities, use the private reporting instructions in SECURITY.md instead.
+        Do not include source previews, assignment answers, credentials, cookies, tokens, student IDs or private page URLs.
+  - type: checkboxes
+    id: authorization
+    attributes:
+      label: Practice-page authorization
+      options:
+        - label: I tested on a page I own or a practice page where external-code import is explicitly permitted, not an exam or proctored session.
+          required: true
+        - label: I reviewed this report for private information and searched existing issues.
+          required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Chrome version, operating system, and Git commit or download date. Manifest version alone may not identify the source revision.
+      placeholder: "Chrome version / OS / commit or download date"
+    validations:
+      required: true
+  - type: dropdown
+    id: editor
+    attributes:
+      label: Editor family
+      options:
+        - Unknown
+        - Native textarea
+        - Ace
+        - CodeMirror 6
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Prefer the bundled local demo or a small page you own with synthetic code. Never share a real login/session.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Say whether inspection, loading, import, verification or undo failed. Note any possible partial write.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Reviewed execution diagnostics (optional)
+      description: Copy only the exported privacy-safe report after reviewing it, not source/target previews or raw browser logs from a private page.
+      render: text

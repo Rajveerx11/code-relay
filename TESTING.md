@@ -1,5 +1,33 @@
 # Verification
 
+## Run the current checks
+
+Use Node 22 or 24 from the repository root; no dependency install is required:
+
+```sh
+node --test
+node --check extension/core.mjs
+node --check extension/diagnostics.mjs
+node --check extension/editor-adapter.mjs
+node --check extension/popup.mjs
+git diff --check
+```
+
+For browser fixtures, start `python3 tools/serve.py --port 8766` (Windows: `py -3 tools/serve.py --port 8766`). Open each URL below and run its console command **only in the local fixture, never on a third-party page**:
+
+| Local path under `http://127.0.0.1:8766` | Console command | Current cases |
+| --- | --- | ---: |
+| `/tests/cm6-browser.html` | `await runCM6Tests()` | 26 |
+| `/tests/browser.html` | `await runTests()` | 2 |
+| `/tests/safety.html` | `runSafetyTests()` | 13 |
+| `/tests/ui.html` | `await runUI()`, then `await runSavedFileTests()` | 3 + 3 |
+
+Check every result has `ok: true`; library-load/network errors are failures, not skipped successes. The Ace/CM6 fixtures fetch pinned test libraries from CDNs and need network access; the extension runtime does not fetch those libraries. Keep browser sandboxing enabled. Stop the local server afterwards.
+
+The latest recorded runtime result is **68 Node tests and 47 browser-fixture checks passed**. These are local models/bridges, not native installed-extension or site-persistence verification. Historical counts below describe earlier revisions. Maintainer-local automation scripts and screenshots are not included in downloads; the committed fixtures above are the portable reproduction path.
+
+The open-source documentation update does not change runtime code or permissions. `CHECKSUMS.sha256` and `VERIFICATION.json` remain historical evidence from commit `0371205`, not verification of the current source ZIP.
+
 ## Default whole-editor replacement and formatting (#14)
 
 - Root cause: the old popup selected cursor/selection insertion by default. The existing confirmed full-replacement adapter already uses the full document range; its mutation code is unchanged in this follow-up.
@@ -7,7 +35,7 @@
 - Windows Node v24.19.0: `node --test tests/*.test.mjs` — **68/68 passed**. New serialized popup/adapter tests cover textarea, Ace and CM6 with both a cursor and partial selection, exact tabs/spaces/blank lines/trailing whitespace/newline/Unicode after BOM/CRLF normalization, confirmation gating, one import request, both delayed checks and undo.
 - Installed Playwright 1.62.0 / Chromium 151.0.7922.34, sandbox enabled: **47/47 browser checks passed** — 26 real CM6 checks (view 6.36.5 and 6.41.0 with state 6.6.0) and 21 legacy checks. The real popup defaults are exercised, not overridden to simulate replacement. Added real CM6 LF/CRLF full-document formatting equality and backward undo. Legacy textarea cursor insertion is explicitly selected separately. No page/console/request errors.
 - Node syntax checks and `git diff --check` passed. Production JavaScript/manifest/permissions are unchanged by this follow-up; only the popup HTML default/help copy changes runtime behavior. No formatter or dependency was added.
-- Local evidence: `C:/Users/rajve/AppData/Local/Temp/code-relay-replace-node-results.txt`, `code-relay-replace-browser-results.json`, and `code-relay-replace-popup.png` under the same Temp directory. The popup screenshot was inspected: default replacement and unchecked confirmation are visible. Native-extension/site saving behavior is still outside these bridge fixtures.
+- Maintainer-local evidence (not bundled): `code-relay-replace-node-results.txt`, `code-relay-replace-browser-results.json`, and `code-relay-replace-popup.png`. The popup screenshot was inspected: default replacement and unchecked confirmation are visible. Native-extension/site saving behavior is still outside these bridge fixtures.
 - Original logo: `assets/code-relay-logo.svg`, rendered with sandboxed Chromium to the 512px `assets/code-relay-logo.png`; both were visually inspected. The README embeds the SVG and links the PNG. No external asset or font is loaded by the logo.
 
 The browser reproduction procedure below uses the current committed fixtures and therefore runs these newer checks. Historical counts below describe their respective earlier runs, not the current suite. LSP remains unavailable because `typescript-language-server` is missing; no clean LSP result is claimed.
@@ -23,15 +51,9 @@ Local Windows validation, Node v24.19.0:
 - Existing browser fixtures also passed **20/20**: textarea, real Ace **1.45.0**, safety checks, popup clipboard/file/replace/undo. Final run: **42/42 total**, no page errors, console errors or failed requests. A test route serves an empty favicon; no browser security flags were disabled.
 - LSP remains blocked: no LSP tool in this worker and `command -v typescript-language-server` / `command -v lsp` found no available executable. Nothing was installed. Syntax/runtime checks do not replace LSP diagnostics.
 
-Reproduce the committed browser fixture: start `py -3 tools/serve.py --port 8766` (or `python3`), open `http://127.0.0.1:8766/tests/cm6-browser.html`, and run `await runCM6Tests()` in that local fixture's console. The result array and page output show every version/case; CDN/network failures are failures, not skipped successes. Optional automation used the installed skill runner:
+Reproduce the committed browser fixture using the current-checks table above. The result array and page output show every version/case; CDN/network failures are failures, not skipped successes. Original automation used a maintainer-local Playwright runner with `CM6_URL` and `CM6_OUTPUT`, producing `code-relay-cm6-browser-results.json`. That temporary runner is not bundled or required to run the committed fixtures.
 
-```sh
-node C:/Users/rajve/.agents/skills/playwright-skill/run.js C:/Users/rajve/AppData/Local/Temp/code-relay-cm6-playwright.cjs
-```
-
-That temporary runner accepts `CM6_URL` and `CM6_OUTPUT`. Evidence: `C:/Users/rajve/AppData/Local/Temp/code-relay-cm6-browser-results.json`. The reproducible fixture is in `tests/cm6-browser.html` and `tests/cm6-browser.mjs`; the runner is local evidence, not a production dependency.
-
-These are **local real-library and test-bridge results, not native installed-extension or live CodeTantra evidence**. User retesting on an authorized practice page remains necessary. No clipboard/assessment restrictions were bypassed. Native Ctrl+Z, permissions, saving/submission, incompatible/private instances, future internal-link changes and resets after the bounded checks remain unverified. Independent OCR/CodeRabbit and publication gates belong to the parent task. Historical results below, `CHECKSUMS.sha256` and `VERIFICATION.json` are unchanged historical evidence; historical statements that all CodeMirror versions are unsupported are superseded only by this narrowly validated CM6 support.
+These are **local real-library and test-bridge results, not native installed-extension or live CodeTantra evidence**. User retesting on an authorized practice page remains necessary. No clipboard/assessment restrictions were bypassed. Native Ctrl+Z, permissions, saving/submission, incompatible/private instances, future internal-link changes and resets after the bounded checks remain unverified. Review and CI evidence for that implementation is recorded in [PR #13](https://github.com/Rajveerx11/code-relay/pull/13). Historical results below, `CHECKSUMS.sha256` and `VERIFICATION.json` are unchanged historical evidence; historical statements that all CodeMirror versions are unsupported are superseded only by this narrowly validated CM6 support.
 
 ## Execution diagnostics (#10, prior change)
 
@@ -40,10 +62,10 @@ Current local validation on Windows, Node v24.19.0:
 - `node --test tests/*.test.mjs`: **48/48 passed** after the PR review follow-up (initial diagnostics implementation: 47/47). New direct diagnostics tests cover fixed vocabulary (including hostile strings/objects), timestamp shape, 100-entry retention, clear, exact serialization/export and cleanup failures. Actual popup/controller tests cover safe file/clipboard failures, successful import/undo, both delayed checks, partial writes, unknown errors, observable global failures and diagnostic failures without workflow interruption. Existing frame and serialized-adapter tests also assert warning/failure/success logging. A new regression first failed when delayed verification discarded known safe reset/replacement explanations; it now proves those explanations survive in workflow status while the report remains category-only and unknown errors remain generic.
 - `node --check extension/diagnostics.mjs` plus all existing production modules and edited/new test modules: passed. CI includes the new production module; no permissions or dependencies changed.
 - Browser-rendered tests: **15/15 passed**, installed Playwright 1.62.0 / Chromium 151.0.7922.34, **sandbox enabled**. Target: `http://127.0.0.1:8766/tests/ui.html`, viewports 1280×1000 and 520×900 (450px popup within a fixture iframe). Existing bridge UI/file/replace/undo flows passed. Diagnostics passed keyboard expansion/focus, privacy, clear, exact native Blob download vs preview, a real page reset after 300 ms failing check 2, a real partial mutation/throw, generic error/rejection events, export-failure containment and empty logs in a new popup realm. No page/console errors or failed requests in the final run. Screenshots were inspected: report wraps within the popup, scrolls at a bounded height, and both controls and lifetime/privacy notices are visible.
-- Reproduction script and artifacts are local, outside the repository: `C:/Users/rajve/AppData/Local/Temp/code-relay-diagnostics-browser.cjs` and `C:/Users/rajve/AppData/Local/Temp/code-relay-diagnostics-browser/` (`results.json`, `export.txt`, `diagnostics-1280.png`, `diagnostics-520.png`). Command: `NODE_PATH='C:/Users/rajve/.codex/skills/playwright-skill/node_modules' node 'C:/Users/rajve/.agents/skills/playwright-skill/run.js' 'C:/Users/rajve/AppData/Local/Temp/code-relay-diagnostics-browser.cjs'`. The runner reused installed dependencies; nothing was installed. Its task-owned server/browser were closed afterwards.
+- Reproduction script and artifacts were maintainer-local, outside the repository: `code-relay-diagnostics-browser.cjs` and a results directory containing `results.json`, `export.txt`, `diagnostics-1280.png` and `diagnostics-520.png`. That automation is not bundled; use the current committed browser fixtures above for portable reproduction. The historical runner reused installed dependencies; nothing was installed. Its task-owned server/browser were closed afterwards.
 - LSP diagnostics are blocked: the delegated toolset has no LSP tool and `typescript-language-server` is unavailable. Syntax and runtime checks are not a substitute for LSP diagnostics.
 
-These are **bridge fixtures, not installed-extension or live CodeTantra verification**. Native extension permissions/download behavior, actual CodeTantra execution, saving/submission and later site changes remain unverified. Closing a real Chrome popup was not tested; a new fixture popup realm was checked for fresh memory. Independent OCR review and CodeRabbit remain publication gates owned by the parent task. Issue #6 remains open; this is only its execution-log slice. Historical evidence below and the checksum/verification files remain untouched.
+These are **bridge fixtures, not installed-extension or live CodeTantra verification**. Native extension permissions/download behavior, actual CodeTantra execution, saving/submission and later site changes remain unverified. Closing a real Chrome popup was not tested; a new fixture popup realm was checked for fresh memory. Review and CI evidence for that implementation is recorded in [PR #11](https://github.com/Rajveerx11/code-relay/pull/11). Issue #6 remains open; this is only its execution-log slice. Historical evidence below and the checksum/verification files remain untouched.
 
 ## Repository foundation checks (prior change)
 
@@ -83,13 +105,7 @@ The current repair first reproduced three false-success cases with `node --test 
 
 ## Browser evidence
 
-A different installed Chromium revision was found and used without disabling its sandbox. With the local server running, this exact command passed:
-
-```sh
-/home/rajveer/.nvm/versions/node/v22.22.3/bin/node /mnt/c/Users/rajve/.codex/skills/playwright-skill/run.js /tmp/practice-import-browser-check.cjs
-```
-
-The temporary script accepts `PRACTICE_URL`, `PRACTICE_OUTPUT` and `CHROMIUM_PATH`. Results: `/tmp/practice-import-browser-results.json`; target: `http://127.0.0.1:8766`; fixtures: `/tests/ui.html`, `/demo/frames.html`, `/tests/safety.html`, `/tests/browser.html`. The test browser and local server were closed afterwards. This script is a local verification artifact, not a bundled extension dependency.
+A different installed Chromium revision was found and used without disabling its sandbox. The historical run used a maintainer-local Node/Playwright runner (`practice-import-browser-check.cjs`) with `PRACTICE_URL`, `PRACTICE_OUTPUT` and `CHROMIUM_PATH`. It produced `practice-import-browser-results.json` against `http://127.0.0.1:8766`, exercising `/tests/ui.html`, `/demo/frames.html`, `/tests/safety.html` and `/tests/browser.html`. The test browser and local server were closed afterwards. This script is a local verification artifact, not bundled or required to run the current committed fixtures.
 
 ## Not verified
 

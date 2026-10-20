@@ -4,100 +4,112 @@
 
 **Your code, into your practice editor.**
 
-Replace the entire program in a permitted practice editor with your own saved file or clipboard text, preserving your supplied formatting. This is **not a VS Code extension**, a secure-exam-browser workaround, or a guaranteed CodeTantra compatibility fix.
+[![CI](https://github.com/Rajveerx11/code-relay/actions/workflows/ci.yml/badge.svg)](https://github.com/Rajveerx11/code-relay/actions/workflows/ci.yml)
+[MIT license](LICENSE) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Test evidence](TESTING.md)
 
-The Chrome installation still appears as **Practice Program Import — V1**, version **1.0.1**. CodeRelay is the project name; this change does not publish a new extension release.
+CodeRelay is a small, open-source Chrome extension for students who write their own programs locally and need to import them into **practice pages that explicitly permit external code**. Load a saved UTF-8 file or read your clipboard, preview it, then confirm replacement of the whole editor. Your supplied indentation is preserved.
+
+This is an independent project, not affiliated with or endorsed by CodeTantra. It does not generate answers, submit work, restore native Ctrl+V, or bypass exam/proctoring restrictions. Do not use it in assessments, exams or proctored sessions. Ask your instructor or platform administrator if permission is unclear.
 
 ## Install in Chrome
 
-1. Keep the project in a permanent folder. If you downloaded a ZIP, extract it completely first; do not select the ZIP itself.
-2. Open `chrome://extensions`.
-3. Switch on **Developer mode**.
-4. Click **Load unpacked**.
-5. Select the project root containing `manifest.json`, `README.md`, and the `extension` subfolder. For this local checkout, select **`C:\CodeTantraChromeExtension`**. The folder name is not important; do not select the `extension` subfolder or a missing old Downloads folder.
-6. In Chrome's Extensions/puzzle-piece menu, pin **Practice Program Import — V1**.
+There is no Chrome Web Store listing. Installation is currently **unpacked source**, not a signed or independently verified release ZIP.
 
-No Node, npm, backend, account, payment, or VS Code plugin is needed to use the extension. Keep the extracted extension folder; Chrome loads its files from that folder. Organization-managed Chrome may prohibit unpacked extensions; ask the administrator rather than changing security policy.
+1. [Download the source ZIP](https://github.com/Rajveerx11/code-relay/archive/refs/heads/main.zip) and extract it completely into a permanent folder. Alternatively:
+   ```sh
+   git clone https://github.com/Rajveerx11/code-relay.git
+   ```
+2. Open `chrome://extensions` in a current version of Chrome and enable **Developer mode**, if your organization permits it.
+3. Click **Load unpacked** and select the folder containing `manifest.json`, `README.md`, and `extension/`. A GitHub ZIP normally extracts as `code-relay-main`; a clone is normally `code-relay`. Do **not** select the ZIP or the `extension/` subfolder.
+4. Pin **Practice Program Import — V1** from Chrome's Extensions menu. That is the current installed name (manifest version **1.0.1**); CodeRelay is the project name.
 
-## Use your VS Code program
+No Node, npm, Python, backend account or payment is needed to use the extension. The manifest requires Chrome 106 or newer; use current Chrome. Keep its folder in place. Managed Chrome may prohibit unpacked extensions; contact your administrator rather than changing security policy.
 
-1. Save your own program in VS Code using UTF-8 encoding.
-2. Open a trusted practice page where external-code import is explicitly allowed.
-3. Click the intended editor before opening the extension so it can prefer that target. You do **not** need to select all its code; the default replaces the entire editor regardless of cursor/selection.
-4. Click the extension icon.
-5. Check **External-code import is permitted here**. Do not use it in exams, assessments or proctored sessions.
-6. Click **Inspect practice editor**. The focused supported editor is preferred; if multiple editors are ambiguous, select one explicitly. Check **Target contents** matches your program, not another input field.
-7. Under **Saved file from VS Code**, choose your `.c`, `.cpp`, `.java`, `.py`, `.js`, `.ts`, or `.txt` file.
-8. Review the preview. Tabs, spaces, blank lines, trailing whitespace/newline and Unicode are retained; a leading BOM is removed and line endings are normalized for the editor. CodeRelay preserves formatting—it does not guess a language or auto-format poorly formatted input.
-9. Leave **Replace entire editor (default)** selected, check **Replace all existing code with the preview above**, then click **Import code**. The confirmation starts unchecked; existing code is not removed until you approve the replacement.
-10. Wait for verification, then check the actual editor. After import/undo, the extension rediscovers and reads the same visible editor after about 150 ms and again 600 ms later. Resets, replacement nodes and hidden targets fail verification without an automatic retry or rollback. This bounded check cannot guarantee later site changes, rendered pixels, saving or submission.
+**Updating:** for a clone, run `git pull --ff-only` in its folder, reload the extension in `chrome://extensions`, then refresh your practice page. For ZIP installations, extract the updated source and load its root as above; remove the old unpacked installation if you change folder paths. Do not overwrite uncommitted local work.
 
-To insert only a snippet instead, explicitly choose **Insert at cursor / replace selection** and set the intended cursor/selection before opening the popup. **Undo last import** restores the previous full value and selection only while that popup remains open and the editor has not changed. Do not rely on native Ctrl+Z; closing the popup discards its temporary undo backup.
+## Import your program
 
-Optional: copy your program and click **Or read clipboard**. Chrome may ask for clipboard-read permission. Saved-file import does not require that permission. Permission failure does not mean CodeTantra's paste restriction was fixed or bypassed.
+1. Save your own program as UTF-8 in VS Code or another editor.
+2. Open a trusted, permitted practice page. Click the intended editor before opening the extension so it can prefer that target. You do not need to select all its code.
+3. Open the extension, check **External-code import is permitted here**, and click **Inspect practice editor**.
+4. Check **Target contents** matches the editor you intend to change. If several editors are found, choose the correct target explicitly.
+5. Choose your saved source file, click **Or read clipboard**, or paste into the extension preview. Review the full preview.
+6. Leave **Replace entire editor (default)** selected, check **Replace all existing code with the preview above**, then click **Import code**. Confirmation starts unchecked.
+7. Wait for verification and inspect the page yourself. The site's own save/run/submission workflow still applies; CodeRelay does not submit work or verify server persistence.
 
-## Execution diagnostics
+### Replacement, formatting and undo
 
-Keep the popup open while testing, then expand **Execution diagnostics** below the status. It shows timestamped action starts/results for inspection, target selection, file/clipboard loading, import, both delayed checks, undo and observable popup failures. Warnings, possible partial writes and failed verification are distinct; there are no automatic retries or rollbacks.
+- **Whole-editor replacement** ignores the cursor/selection and replaces the entire document in one operation, rather than clearing it and inserting later.
+- **Snippet insertion** is optional: choose **Insert at cursor / replace selection**. Set the cursor/selection before opening the popup.
+- Tabs, spaces, blank lines, trailing whitespace/newline and Unicode are retained. A leading BOM is removed and line endings are normalized for the editor. CodeRelay preserves supplied formatting; it does not auto-format code.
+- **Undo last import** restores the previous full value and selection only while that popup stays open and the editor has not changed. Closing the popup discards its temporary backup. Do not rely on native Ctrl+Z.
+- After import/undo, read-back checks occur immediately, then after about 150 ms and another 600 ms. Later site changes, visual rendering, autosave and submission are not guaranteed. There is no automatic retry or rollback.
 
-The report keeps only the latest **100 entries in popup memory**. Closing the popup clears it. **Clear log** clears only diagnostics, not your source or undo backup. Review the visible **Report preview**, then explicitly click **Export report** to request a local text download before closing the popup. The downloaded file remains until you delete it.
+## Compatibility
 
-Only fixed action/status/category messages and timestamps are included: no source, clipboard text, filenames, editor labels, URLs, account/student data, raw exception messages or stacks. Unknown errors are generic. Logs do **not** prove page saving, submission or live CodeTantra support. Share the exported report instead of copying private page details; the normal source/target previews are not part of the report.
+| Editor or context | Status |
+| --- | --- |
+| Visible native textareas | Supported |
+| Ace with an exposed editor instance | Supported |
+| CodeMirror 6 with a validated accessible view and one selection | Supported; local tests cover view 6.36.5 and 6.41.0 |
+| Visible, accessible same-origin iframes, including nested frames | Supported; writes stay pinned to the selected document and exact URL |
+| Monaco, CodeMirror 5, private/incompatible Ace or CM6 instances | Unsupported |
+| Cross-origin, inaccessible/sandboxed, hidden, `about:blank` or `srcdoc` frames | Unsupported |
+| Read-only/disabled editors and detected assessment/proctoring pages | Refused |
 
-## Safe local trial
+Source is limited to **200,000 JavaScript string code units** (shown as characters in the UI); saved files to **800,000 bytes**. Empty text and NUL characters are rejected.
 
-Python 3 is needed only for this optional demo/test server. Open a terminal in the project root and run:
+CodeTantra practice workflows motivated this project, but editor configurations differ. A user has reported successful import; this does **not** establish compatibility with every tenant or independent verification of permissions, saving or submission. Try the local demo first, then only an authorized practice page. Assessment detection is heuristic, not proof that import is permitted.
+
+CM6 integration uses model state/dispatch rather than rendered HTML. A narrowly guarded, version-sensitive DOM-to-view link must validate successfully or import is refused. See [architecture](ARCHITECTURE.md) and the [official EditorView API](https://codemirror.net/docs/ref/#view.EditorView).
+
+## Try it safely on your own machine
+
+Python 3 is needed only for the optional local demo/test server. From the project root:
 
 ```sh
 python3 tools/serve.py --port 8766
+# Windows alternative:
+py -3 tools/serve.py --port 8766
 ```
 
-On Windows, use `py tools/serve.py --port 8766` if `python3` is unavailable.
+Open `http://127.0.0.1:8766/demo/`. Focus its sample editor, open the extension, approve the local practice page, inspect it, and import `demo/sample.py`. Check the entire program and try Undo without closing the popup. Repeat at `http://127.0.0.1:8766/demo/frames.html` for an iframe-only editor. Stop the server with Ctrl+C; do not expose it publicly.
 
-Open `http://127.0.0.1:8766/demo/` in Chrome. Place the cursor in the sample textarea, open the extension, approve the page, inspect it, and import `demo/sample.py`. Confirm the text appears and try **Undo last import** without closing the popup. Repeat at `http://127.0.0.1:8766/demo/frames.html` to test an iframe-only editor. Stop the demo server with Ctrl+C.
+## Privacy and permissions
 
-## What V1 supports
+| Permission | Why it is used |
+| --- | --- |
+| `activeTab` | Temporary access following your extension action on the selected tab |
+| `scripting` | Inspect and update the chosen supported editor |
+| Optional `clipboardRead` | Requested only when you click the clipboard button; saved-file import does not need it |
 
-- Visible native textareas.
-- Ace editors exposing their editor instance through the page element.
-- CodeMirror 6 editors with a validated accessible view and one selection (tested with `@codemirror/view` 6.36.5 and 6.41.0). Uses model state/dispatch, not edits to rendered HTML.
-- Main page and accessible same-origin iframes (including nested frames), with temporary user-triggered `activeTab` access. Each target shows its frame; import and undo stay pinned to that document and exact URL.
-- Preview, default separately confirmed whole-editor replacement, optional cursor/selection insertion, read-back verification, and temporary extension-provided undo.
-- Source limit: 200,000 characters; file byte limit: 800,000 bytes.
+There are no broad host permissions, background service worker, extension backend, telemetry, persistent source storage or explicit source uploads. Source and undo data live in popup memory. **Importing into a website gives that website your code**, and its own autosave/server behavior still applies. MAIN-world integration shares the page's JavaScript environment; only use trusted pages.
 
-It fails safely on read-only/disabled editors, unsupported private editor instances, changed page/editor state, mismatched URL, and identified assessment/proctoring pages. The assessment detection is only a heuristic, **not** a guarantee that a page permits import. You remain responsible for authorization.
+### Diagnostics and support
 
-## CodeTantra status and troubleshooting
+While the popup is still open, expand **Execution diagnostics**. It keeps the latest **100 entries** in memory, using fixed categories and timestamps. It excludes source text, clipboard contents, filenames, labels, URLs, account/student details and raw exceptions. Review **Report preview**, then explicitly **Export report** if needed. Closing the popup clears the log; an exported file remains until you delete it. Clearing the log does not clear source or undo data.
 
-The reported “No supported writable top-frame editor” error came from a hard-coded frame-0-only scan. This working copy now discovers supported editors in accessible same-origin iframes and routes snapshot/import/undo to the selected frame. Reload the extension in `chrome://extensions`, refresh the practice page, and inspect again.
+[Report a bug](https://github.com/Rajveerx11/code-relay/issues/new/choose) with a harmless local reproduction and a reviewed diagnostic report. **Never post credentials, cookies, tokens, student IDs, private page URLs, assignment answers or source-preview screenshots.** Security concerns belong in [private reporting](SECURITY.md), not public issues.
 
-The live CodeTantra editor, iframe structure, permission context, saving behavior, and platform rules have not been inspected or verified. Same-origin frame discovery and validated CodeMirror 6 support do not establish compatibility with every CodeTantra configuration; the user must retest on an authorized practice page.
+## Troubleshooting
 
-A [public community integration](https://github.com/amandotyadav/codetantra-ai/blob/ea7c33412bfacdf1e6aa2e7a390ffcbef6c7287c/src/utils/extract.ts#L87-L92) reads `.cm-content`, suggesting CodeMirror 6 in at least one configuration—not evidence about your tenant. This adapter uses the [official EditorView API](https://codemirror.net/docs/ref/#view.EditorView) and [readOnly state](https://codemirror.net/docs/ref/#state.EditorState.readOnly), with a narrowly guarded, version-sensitive DOM-to-view discovery link. Inaccessible or unfamiliar instances fail closed. No assessment or paste restrictions are bypassed; native Ctrl+Z, autosave and submission are not promised.
+- **Missing manifest / extension load error:** extract the ZIP and select its root containing `manifest.json`. Keep that folder in place.
+- **No supported writable editor:** check the compatibility table, focus one visible editor and inspect again. Cross-origin/private instances cannot be made supported by granting broad access; ask the site for an approved import method.
+- **Only part of the program changed:** reload the extension and select the default whole-editor replacement mode, then confirm it. Selection mode intentionally edits only a range.
+- **Editor changed:** content, selection or identity no longer matches the approved snapshot. Inspect again instead of overwriting stale state.
+- **Verification failed or a write may be partial:** inspect the actual page before doing anything else. Do not assume it was rolled back. Export diagnostics and use harmless code for a local reproduction.
+- **Invalid UTF-8:** resave the file with UTF-8 encoding.
+- **Clipboard denied:** use a saved file or paste into the preview. This does not fix or bypass the site's clipboard restrictions.
+- **Managed browser blocks installation:** ask your administrator; do not weaken its controls.
 
-- **No supported writable editor:** Monaco, CodeMirror 5 and private/incompatible CodeMirror 6 or Ace instances remain unsupported. If CodeMirror 6 markup is detected but its view/selection cannot be validated, the popup and privacy-safe execution report identify that capability limitation. Use one selection in a visible permitted practice editor and inspect again; otherwise ask the site for an approved import method. Cross-origin, sandboxed/inaccessible, hidden, and `about:blank`/`srcdoc` frames are not supported by this build. No broad host permissions are requested. If the error remains, export the execution report. Further compatibility investigation requires separately authorized, privacy-reviewed page evidence.
-- **Editor changed:** the false alarm caused by comparing JSON property order across Chrome messages is fixed. Reload the extension in `chrome://extensions`, refresh the practice page, and inspect again. Snapshot fields are now compared by value. If an actual change occurs, the error identifies **content**, **selection**, or **identity**; close the popup, set the cursor, reopen it and inspect again. No stale content is overwritten.
-- **Reported import but no visible change:** reload this updated extension and inspect again. Earlier builds chose the first writable editor and checked only its immediate value. The updated build prefers the focused editor, excludes invisible helper inputs, shows the selected target's contents, and performs two delayed checks. If the contents do not match your code editor, choose the correct target; do not import into an unrelated input. If the problem persists, export the execution report; do not share source previews, private labels or URLs. Live CodeTantra remains unverified.
-- **Invalid UTF-8:** resave the source as UTF-8 in VS Code.
-- **Clipboard access failed:** use the saved-file input or paste into the extension preview.
-- **Managed browser blocks Developer mode:** contact the administrator. Do not weaken its security controls.
-- **Extension load error:** confirm the folder still exists and contains `manifest.json`. For this checkout, load `C:\CodeTantraChromeExtension`, not the old Downloads path.
-- **Only part of the program changed:** reload the extension and leave **Replace entire editor (default)** selected. Confirm replacement before importing. Selection mode intentionally edits only the selected range or cursor position.
+## Contribute
 
-## Privacy and verification boundary
+Bug reproductions, accessibility improvements, documentation fixes and focused editor-compatibility tests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), [architecture](ARCHITECTURE.md) and [test instructions](TESTING.md). Use synthetic code and keep existing consent, identity, permission and assessment safeguards intact.
 
-The extension has no backend, telemetry, persistent storage, or explicit source upload. It reads files or clipboard text only after your action. Clipboard permission is optional. Code and undo data remain in temporary popup memory. Importing text into a website makes that text available to that website; its own autosave/server behavior still applies. MAIN-world editor integration shares the page's JavaScript environment, so use a trusted authorized page.
+Latest recorded runtime validation: **68 Node tests and 47 sandboxed browser-fixture checks passed**. CI runs Node 22/24 on Windows/Linux. These fixtures are not native installed-extension or live CodeTantra verification. Historical `CHECKSUMS.sha256` and `VERIFICATION.json` describe an old baseline, not the current download; see [TESTING.md](TESTING.md).
 
-No autosubmission, monitoring changes, simulated typing, exam-policy changes, or restoration of native Ctrl+V are included.
+## License and artwork
 
-See `TESTING.md` for real local test results and remaining verification. Source, tests and demo are included.
+CodeRelay's code and original artwork are available under the [MIT License](LICENSE). Third-party libraries and trademarks remain under their owners' terms. The optional browser fixtures fetch Ace and CodeMirror from CDNs; those libraries are not bundled with the extension.
 
-## Project logo
-
-The original CodeRelay mark combines code brackets with a relay arrow, using the popup's forest-green and mint palette. Assets: [editable SVG](assets/code-relay-logo.svg) · [512px PNG](assets/code-relay-logo.png). The mark is project artwork, not a CodeTantra logo or affiliation claim.
-
-## What changed in 1.0.1
-
-The original ZIP put its manifest at `practice-program-import-v1/extension/manifest.json`. Choosing the outer folder in Load unpacked therefore produced a missing-manifest error. This ZIP has one `manifest.json` at its root, pointing to `extension/popup.html`; popup CSS and module imports retain their correct relative paths. Snapshots now track the actual editor DOM node, so replacement/reordered editors cannot silently inherit approval. Disabled fieldsets are respected. If a website rewrites the value or a write fails partway, stale Import/Undo actions are cleared and the popup warns that the editor may have changed; inspect again. There is no automatic rollback of site edits. No permissions were added. The bundled test documentation and regression checks now match this layout. Source, tests, and local demo are preserved.
-
-Official installation reference: https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world
+Original logo: [SVG](assets/code-relay-logo.svg) · [512px PNG](assets/code-relay-logo.png). The brackets and relay arrow are project artwork, not a CodeTantra affiliation mark.

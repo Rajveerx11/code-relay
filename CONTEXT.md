@@ -4,7 +4,7 @@
 
 This document applies only to this project folder. It is a source-grounded onboarding reference, not a global agent configuration. See [ARCHITECTURE.md](ARCHITECTURE.md) for runtime design and [README.md](README.md) for end-user instructions.
 
-The project is **CodeRelay**. The local folder remains `CodeTantraChromeExtension`, and the installed Chrome manifest still uses **Practice Program Import — V1**, version **1.0.1**. It is a Chrome extension that previews and imports a user's own saved source text into a trusted practice page where external-code import is explicitly permitted.
+The project is **CodeRelay**, distributed under the [MIT License](LICENSE). Checkout folder names may vary; the installed Chrome manifest still uses **Practice Program Import — V1**, version **1.0.1**. It is a Chrome extension that previews and imports a user's own saved source text into a trusted practice page where external-code import is explicitly permitted.
 
 It is **not** a VS Code extension, an exam/proctoring bypass, an automatic submission tool, or a guaranteed CodeTantra integration. Live CodeTantra compatibility and server-side saving/submission have not been verified.
 
@@ -15,13 +15,15 @@ It is **not** a VS Code extension, an exam/proctoring bypass, an automatic submi
 - No npm packages, `package.json`, build step, bundler, framework or production backend.
 - No background service worker, persistent content script or broad host permissions.
 - Node's built-in test runner provides automated tests; Python's standard library provides an optional local demo server.
-- GitHub repository: [Rajveerx11/code-relay](https://github.com/Rajveerx11/code-relay), verified private when created. Default branch: `main`.
+- GitHub repository: [Rajveerx11/code-relay](https://github.com/Rajveerx11/code-relay). Default branch: `main`. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and [SECURITY.md](SECURITY.md) for private reporting.
 - `.github/workflows/ci.yml` defines Node 22/24 tests and production-module syntax checks on Windows and Linux for pull requests and pushes to `main`. Check GitHub Actions for actual run results; workflow presence alone does not prove a passing run.
 
 ## File map
 
 | Path | Purpose |
 | --- | --- |
+| `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md` | MIT terms, contributor workflow and private security reporting. |
+| `.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md` | Privacy-aware bug reports and contribution checklist. |
 | `manifest.json` | Root Chrome manifest, permissions, popup entry point and extension-page CSP. |
 | `extension/popup.html` | Consent, target selection, source preview, import and undo interface. |
 | `extension/popup.css` | Popup presentation and control states. |
@@ -69,14 +71,14 @@ The server binds to `127.0.0.1`. Its GET handler permits paths beginning with `/
 Use an installed Node version supporting ES modules and `node:test`:
 
 ```sh
-node --test tests/*.test.mjs
+node --test
 node --check extension/diagnostics.mjs
 node --check extension/core.mjs
 node --check extension/editor-adapter.mjs
 node --check extension/popup.mjs
 ```
 
-There is no dependency-install step. In a shell without wildcard expansion, pass the `tests/*.test.mjs` files explicitly if needed.
+There is no dependency-install step. `node --test` discovers the test files without shell wildcard expansion; CI additionally verifies Node 22/24 on Windows and Linux.
 
 ## Supported behavior and limits
 
