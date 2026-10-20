@@ -43,11 +43,12 @@ function page(kind){
  return {node,context};
 }
 let popupSequence=0;
-async function popup(kind,onResult=()=>{}){
+async function popup(kind,onResult=()=>{},mode='selection'){
  const {node,context,fake}=page(kind);
  const html=readFileSync(new URL('../extension/popup.html',import.meta.url),'utf8');
  const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],element()]));
- nodes.mode.value='selection';nodes.preview.value='new\nनमस्ते';nodes.consent.checked=true;
+ // Legacy tests choose selection mode explicitly; replacement tests exercise replace.
+ nodes.mode.value=mode;nodes.preview.value='new\nनमस्ते';nodes.consent.checked=true;
  globalThis.document={getElementById:id=>nodes[id],createElement:()=>element()};
  const calls=[];
  globalThis.chrome={tabs:{query:async()=>[{id:1,url:'https://practice.example/editor'}]},scripting:{executeScript:async input=>{
@@ -74,6 +75,31 @@ for(const kind of ['textarea','ace','codemirror6'])test(`${kind}: real popup/ada
  node.value='changed by site';await click('insert');
  assert.equal(node.value,'changed by site');assert.match(nodes.status.textContent,/Editor content changed/);
  assert.equal(nodes.insert.disabled,true);assert.equal(nodes.undo.disabled,true);
+});
+for(const kind of ['textarea','ace','codemirror6'])for(const collapsed of [false,true])test(`${kind}: confirmed full replacement preserves exact source formatting despite ${collapsed?'cursor':'partial selection'}`,async()=>{
+ const source='\uFEFF\tif (ready) {\r\n    run("न 👋");  \r\n\r\n}\r\n';
+ const expected=source.replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n');
+ const {node,nodes,calls,click}=await popup(kind,({node,fake,operation})=>{
+  if(collapsed && operation==='inspect'){
+   if(fake)fake.view.set('abcXYZdef',3,3);
+   else node.selectionStart=node.selectionEnd=3;
+  }
+ },'replace');
+ nodes.preview.value=source;nodes.preview.listeners.input();
+ await click('inspect');
+ assert.equal(nodes.replaceRow.hidden,false);assert.equal(nodes.replaceConfirmed.checked,false);
+ assert.equal(nodes.insert.disabled,true,'replacement requires separate confirmation');
+ assert.equal(node.value,'abcXYZdef');
+ nodes.replaceConfirmed.checked=true;nodes.replaceConfirmed.listeners.input();
+ assert.equal(nodes.insert.disabled,false);await click('insert');
+ assert.equal(nodes.status.dataset.error,'false',nodes.status.textContent);
+ assert.equal(node.value,expected,'no old prefix/suffix or formatting changes');
+ const writes=calls.filter(call=>call.args[0].operation==='insert');
+ assert.equal(writes.length,1);assert.equal(writes[0].args[0].mode,'replace');assert.equal(writes[0].args[0].replaceConfirmed,true);
+ assert.equal(calls.filter(call=>call.args[0].operation==='verify').length,2);
+ await click('undo');assert.equal(node.value,'abcXYZdef');
+ assert.equal(node.selectionStart,3);assert.equal(node.selectionEnd,collapsed?3:6);
+ assert.equal(nodes.status.dataset.error,'false',nodes.status.textContent);
 });
 for(const failure of ['reset','replace','hide'])test(`does not report success when the page ${failure}s the editor after a write`,async()=>{
  const {node,nodes,calls,click}=await popup('textarea',({node,context,operation})=>{

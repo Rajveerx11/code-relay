@@ -1,14 +1,20 @@
-# Practice Program Import — V1 (1.0.1)
+<p align="center"><img src="assets/code-relay-logo.svg" alt="CodeRelay logo: code brackets surrounding a relay arrow" width="144" height="144"></p>
 
-A small Chrome browser extension for importing your own saved source file into a permitted practice editor. This is **not a VS Code extension**, a secure-exam-browser workaround, or a guaranteed CodeTantra compatibility fix.
+# CodeRelay
+
+**Your code, into your practice editor.**
+
+Replace the entire program in a permitted practice editor with your own saved file or clipboard text, preserving your supplied formatting. This is **not a VS Code extension**, a secure-exam-browser workaround, or a guaranteed CodeTantra compatibility fix.
+
+The Chrome installation still appears as **Practice Program Import — V1**, version **1.0.1**. CodeRelay is the project name; this change does not publish a new extension release.
 
 ## Install in Chrome
 
-1. Extract the ZIP completely into a permanent folder named `practice-program-import-fixed`. Do not select the ZIP itself.
+1. Keep the project in a permanent folder. If you downloaded a ZIP, extract it completely first; do not select the ZIP itself.
 2. Open `chrome://extensions`.
 3. Switch on **Developer mode**.
 4. Click **Load unpacked**.
-5. Select the extracted `practice-program-import-fixed` folder itself. It contains `manifest.json`, `README.md`, and the `extension` subfolder. Do not select `extension`: the manifest is now at the top level.
+5. Select the project root containing `manifest.json`, `README.md`, and the `extension` subfolder. For this local checkout, select **`C:\CodeTantraChromeExtension`**. The folder name is not important; do not select the `extension` subfolder or a missing old Downloads folder.
 6. In Chrome's Extensions/puzzle-piece menu, pin **Practice Program Import — V1**.
 
 No Node, npm, backend, account, payment, or VS Code plugin is needed to use the extension. Keep the extracted extension folder; Chrome loads its files from that folder. Organization-managed Chrome may prohibit unpacked extensions; ask the administrator rather than changing security policy.
@@ -17,16 +23,16 @@ No Node, npm, backend, account, payment, or VS Code plugin is needed to use the 
 
 1. Save your own program in VS Code using UTF-8 encoding.
 2. Open a trusted practice page where external-code import is explicitly allowed.
-3. Click in its editor and place the cursor or select the text you want to replace **before** opening the extension.
+3. Click the intended editor before opening the extension so it can prefer that target. You do **not** need to select all its code; the default replaces the entire editor regardless of cursor/selection.
 4. Click the extension icon.
 5. Check **External-code import is permitted here**. Do not use it in exams, assessments or proctored sessions.
 6. Click **Inspect practice editor**. The focused supported editor is preferred; if multiple editors are ambiguous, select one explicitly. Check **Target contents** matches your program, not another input field.
 7. Under **Saved file from VS Code**, choose your `.c`, `.cpp`, `.java`, `.py`, `.js`, `.ts`, or `.txt` file.
-8. Review the preview. UTF-8 text, tabs and Unicode are retained; line endings are normalized to the editor's format.
-9. Leave **Insert at cursor / replace selection** selected, then click **Import code**.
+8. Review the preview. Tabs, spaces, blank lines, trailing whitespace/newline and Unicode are retained; a leading BOM is removed and line endings are normalized for the editor. CodeRelay preserves formatting—it does not guess a language or auto-format poorly formatted input.
+9. Leave **Replace entire editor (default)** selected, check **Replace all existing code with the preview above**, then click **Import code**. The confirmation starts unchecked; existing code is not removed until you approve the replacement.
 10. Wait for verification, then check the actual editor. After import/undo, the extension rediscovers and reads the same visible editor after about 150 ms and again 600 ms later. Resets, replacement nodes and hidden targets fail verification without an automatic retry or rollback. This bounded check cannot guarantee later site changes, rendered pixels, saving or submission.
 
-To replace the whole program, select **Replace entire editor**, check the separate replacement confirmation, then import. **Undo last import** restores the previous value and selection only while that popup remains open and the editor has not changed. Do not rely on native Ctrl+Z; closing the popup discards its temporary undo backup.
+To insert only a snippet instead, explicitly choose **Insert at cursor / replace selection** and set the intended cursor/selection before opening the popup. **Undo last import** restores the previous full value and selection only while that popup remains open and the editor has not changed. Do not rely on native Ctrl+Z; closing the popup discards its temporary undo backup.
 
 Optional: copy your program and click **Or read clipboard**. Chrome may ask for clipboard-read permission. Saved-file import does not require that permission. Permission failure does not mean CodeTantra's paste restriction was fixed or bypassed.
 
@@ -40,7 +46,7 @@ Only fixed action/status/category messages and timestamps are included: no sourc
 
 ## Safe local trial
 
-Python 3 is needed only for this optional demo/test server. Open a terminal in the extracted `practice-program-import-fixed` folder and run:
+Python 3 is needed only for this optional demo/test server. Open a terminal in the project root and run:
 
 ```sh
 python3 tools/serve.py --port 8766
@@ -56,7 +62,7 @@ Open `http://127.0.0.1:8766/demo/` in Chrome. Place the cursor in the sample tex
 - Ace editors exposing their editor instance through the page element.
 - CodeMirror 6 editors with a validated accessible view and one selection (tested with `@codemirror/view` 6.36.5 and 6.41.0). Uses model state/dispatch, not edits to rendered HTML.
 - Main page and accessible same-origin iframes (including nested frames), with temporary user-triggered `activeTab` access. Each target shows its frame; import and undo stay pinned to that document and exact URL.
-- Preview, cursor insertion, selection replacement, separately confirmed replace-all, read-back verification, and temporary extension-provided undo.
+- Preview, default separately confirmed whole-editor replacement, optional cursor/selection insertion, read-back verification, and temporary extension-provided undo.
 - Source limit: 200,000 characters; file byte limit: 800,000 bytes.
 
 It fails safely on read-only/disabled editors, unsupported private editor instances, changed page/editor state, mismatched URL, and identified assessment/proctoring pages. The assessment detection is only a heuristic, **not** a guarantee that a page permits import. You remain responsible for authorization.
@@ -75,7 +81,8 @@ A [public community integration](https://github.com/amandotyadav/codetantra-ai/b
 - **Invalid UTF-8:** resave the source as UTF-8 in VS Code.
 - **Clipboard access failed:** use the saved-file input or paste into the extension preview.
 - **Managed browser blocks Developer mode:** contact the administrator. Do not weaken its security controls.
-- **Extension load error:** confirm you extracted the ZIP and selected the folder containing `manifest.json`.
+- **Extension load error:** confirm the folder still exists and contains `manifest.json`. For this checkout, load `C:\CodeTantraChromeExtension`, not the old Downloads path.
+- **Only part of the program changed:** reload the extension and leave **Replace entire editor (default)** selected. Confirm replacement before importing. Selection mode intentionally edits only the selected range or cursor position.
 
 ## Privacy and verification boundary
 
@@ -84,6 +91,10 @@ The extension has no backend, telemetry, persistent storage, or explicit source 
 No autosubmission, monitoring changes, simulated typing, exam-policy changes, or restoration of native Ctrl+V are included.
 
 See `TESTING.md` for real local test results and remaining verification. Source, tests and demo are included.
+
+## Project logo
+
+The original CodeRelay mark combines code brackets with a relay arrow, using the popup's forest-green and mint palette. Assets: [editable SVG](assets/code-relay-logo.svg) · [512px PNG](assets/code-relay-logo.png). The mark is project artwork, not a CodeTantra logo or affiliation claim.
 
 ## What changed in 1.0.1
 

@@ -1,6 +1,18 @@
 # Verification
 
-## Validated CodeMirror 6 practice editors (#12)
+## Default whole-editor replacement and formatting (#14)
+
+- Root cause: the old popup selected cursor/selection insertion by default. The existing confirmed full-replacement adapter already uses the full document range; its mutation code is unchanged in this follow-up.
+- The production-HTML default regression failed before changing the popup and now passes: replace mode explicitly selected, confirmation visible and unchecked, selection mode retained as opt-in.
+- Windows Node v24.19.0: `node --test tests/*.test.mjs` — **68/68 passed**. New serialized popup/adapter tests cover textarea, Ace and CM6 with both a cursor and partial selection, exact tabs/spaces/blank lines/trailing whitespace/newline/Unicode after BOM/CRLF normalization, confirmation gating, one import request, both delayed checks and undo.
+- Installed Playwright 1.62.0 / Chromium 151.0.7922.34, sandbox enabled: **47/47 browser checks passed** — 26 real CM6 checks (view 6.36.5 and 6.41.0 with state 6.6.0) and 21 legacy checks. The real popup defaults are exercised, not overridden to simulate replacement. Added real CM6 LF/CRLF full-document formatting equality and backward undo. Legacy textarea cursor insertion is explicitly selected separately. No page/console/request errors.
+- Node syntax checks and `git diff --check` passed. Production JavaScript/manifest/permissions are unchanged by this follow-up; only the popup HTML default/help copy changes runtime behavior. No formatter or dependency was added.
+- Local evidence: `C:/Users/rajve/AppData/Local/Temp/code-relay-replace-node-results.txt`, `code-relay-replace-browser-results.json`, and `code-relay-replace-popup.png` under the same Temp directory. The popup screenshot was inspected: default replacement and unchecked confirmation are visible. Native-extension/site saving behavior is still outside these bridge fixtures.
+- Original logo: `assets/code-relay-logo.svg`, rendered with sandboxed Chromium to the 512px `assets/code-relay-logo.png`; both were visually inspected. The README embeds the SVG and links the PNG. No external asset or font is loaded by the logo.
+
+The browser reproduction procedure below uses the current committed fixtures and therefore runs these newer checks. Historical counts below describe their respective earlier runs, not the current suite. LSP remains unavailable because `typescript-language-server` is missing; no clean LSP result is claimed.
+
+## Validated CodeMirror 6 practice editors (#12, prior change)
 
 Local Windows validation, Node v24.19.0:
 

@@ -30,6 +30,16 @@ window.runCM6Tests=async()=>{
    assert(view.state.doc.toString()===before.value && view.state.selection.main.anchor===7 && view.state.selection.main.head===4,'backwards selection not restored');
    assert(writes===2,'insert/undo must each use one dispatch');
   });
+  for(const separator of ['\n','\r\n'])await check(`full replacement preserves exact formatting with ${JSON.stringify(separator)} and ignores partial selection`,()=>{
+   const view=create({extensions:EditorState.lineSeparator.of(separator)}),before=invoke('snapshot').snapshot;
+   const source='\tif (ready) {\r\n    run("न 👋");  \r\n\r\n}\r\n',expected=source.replace(/\r\n?/g,'\n');
+   const result=invoke('insert',{expected:before,text:source,mode:'replace',replaceConfirmed:true});
+   assert(result.ok,result.error);assert(view.state.doc.toString()===expected,'old text or changed formatting remains');
+   assert(view.state.sliceDoc()===expected.replace(/\n/g,separator),'configured line endings changed');
+   const undone=invoke('undo',{expected:result.snapshot,restore:before});
+   assert(undone.ok && view.state.doc.toString()===before.value,'whole replacement undo failed');
+   assert(view.state.selection.main.anchor===6 && view.state.selection.main.head===3,'backward selection lost');
+  });
   await check('virtualized full model, not rendered lines',()=>{
    const text=Array.from({length:3000},(_,i)=>`line ${i} 😀`).join('\n'),view=create({doc:text,selection:{anchor:0}});
    const snap=invoke('snapshot');assert(snap.ok && snap.snapshot.value===text,'full model was not read');
@@ -90,7 +100,8 @@ window.runCM6Tests=async()=>{
   });
   const popup=async(resetSample=0)=>{
    const view=create(),calls=[];let verifications=0;
-   window.sampleCode='न\n👋';window.clipboardFails=false;
+   window.sampleCode='\uFEFF\tif (ready) {\r\n    run("न 👋");  \r\n\r\n}\r\n';window.clipboardFails=false;
+   const expected=window.sampleCode.replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n');
    // Test bridge calls the actual adapter. Node tests separately serialize it
    // across contexts. This does NOT emulate Chrome permissions/document IDs.
    window.executeForTest=(_func,args)=>{
@@ -107,8 +118,12 @@ window.runCM6Tests=async()=>{
    document.getElementById('popup-host').append(frame);await loaded;
    const doc=frame.contentDocument,$=id=>doc.getElementById(id);
    await until(()=>$('inspect') && !$('inspect').disabled);
+   assert($('mode').value==='replace' && !$('replaceRow').hidden && !$('replaceConfirmed').checked,'wrong production default');
    $('consent').click();$('inspect').click();await until(()=>$('target').options.length===1 && !$('inspect').disabled);
-   $('readClipboard').click();await until(()=>!$('insert').disabled);$('insert').click();await until(()=>!$('inspect').disabled);
+   $('readClipboard').click();await until(()=>$('preview').value===expected && !$('readClipboard').disabled);
+   assert($('insert').disabled,'replacement confirmation missing');$('insert').click();
+   assert(!calls.includes('insert') && view.state.doc.toString()==='abcXYZdef','unconfirmed mutation');
+   $('replaceConfirmed').click();await until(()=>!$('insert').disabled);$('insert').click();await until(()=>!$('inspect').disabled);
    const report=$('diagnosticReport').textContent;
    assert(calls.filter(value=>value==='insert').length===1,'write retry');
    if(resetSample){
@@ -116,7 +131,7 @@ window.runCM6Tests=async()=>{
     assert(report.includes(`| verify-${resetSample} | failed | verification-failed |`),'wrong delayed check');
     assert(view.state.doc.toString()==='site reset' && verifications===resetSample,'rollback or wrong verification count');
    }else{
-    assert(view.state.doc.toString()==='abcन\n👋def' && !$('undo').disabled,$('status').textContent);
+    assert(view.state.doc.toString()===expected && !$('undo').disabled,$('status').textContent);
     for(const sample of [1,2])assert(report.includes(`| verify-${sample} | success | completed |`),'missing delayed sample');
     $('undo').click();await until(()=>!$('inspect').disabled);
     assert(view.state.doc.toString()==='abcXYZdef' && view.state.selection.main.anchor===6 && view.state.selection.main.head===3,'popup undo failed');
@@ -124,7 +139,7 @@ window.runCM6Tests=async()=>{
    }
    assert(!/abcXYZdef|न|localhost|127\.0\.0\.1/.test(report),'diagnostics leaked input or URL');
   };
-  await check('real popup bridge import, both delayed checks and backwards undo',()=>popup());
+  await check('real popup default full replacement, exact formatting, both delayed checks and backwards undo',()=>popup());
   for(const sample of [1,2])await check(`real popup bridge reset at delayed sample ${sample}, no retry`,()=>popup(sample));
  }
  document.getElementById('results').textContent=JSON.stringify(results,null,2);return results;

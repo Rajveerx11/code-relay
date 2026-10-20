@@ -42,7 +42,7 @@ The diagram is a logical dependency/data-flow view. The adapter module is import
 
 The extension-page CSP is `script-src 'self'; object-src 'none'; connect-src 'none'`. There are no declared host permissions, background scripts, content scripts or web-accessible resources. The popup does not fetch a backend.
 
-`popup.html` provides three workflow stages: approve/inspect, bring source text into a preview, and deliberately import or undo. Source and target text are displayed through control values/text content, not interpreted as HTML.
+`popup.html` provides three workflow stages: approve/inspect, bring source text into a preview, and deliberately import or undo. **Replace entire editor** is the selected default; its separate confirmation starts unchecked and remains required by both UI and adapter. Cursor/selection insertion is an explicit opt-in. Source and target text are displayed through control values/text content, not interpreted as HTML.
 
 ### Popup controller: `extension/popup.mjs`
 
@@ -146,7 +146,7 @@ The node token is a UUID held on the actual DOM node through a non-enumerable `S
 
 Before insert or undo, the adapter compares content, identity and selection fields. Comparisons do not rely on snapshot object key order across Chrome serialization. `verify` compares content and identity but allows harmless cursor movement.
 
-Insertion additionally validates non-empty text, NUL exclusion, the 200,000-code-unit source/result limits, insertion mode, replace-all confirmation, editor writability and textarea limits. Source line endings are converted to the editor's format before range replacement.
+Insertion additionally validates non-empty text, NUL exclusion, the 200,000-code-unit source/result limits, insertion mode, replace-all confirmation, editor writability and textarea limits. Whole replacement uses range `0..before.value.length`, independent of the cursor/selection; it is not a clear-then-insert sequence. Source line endings are converted to the editor's format before range replacement. Apart from leading BOM/newline normalization, tabs, spaces, blank lines, trailing whitespace/newline and Unicode are preserved exactly. No language detection or automatic formatter is introduced. CodeMirror's [ChangeSpec](https://codemirror.net/docs/ref/#state.ChangeSpec) and `state.toText()` supply the existing replacement/line-separator mechanics.
 
 These are stale-target safeguards for trusted pages, not isolation from hostile page JavaScript: MAIN-world objects and editor APIs are controlled by the page.
 

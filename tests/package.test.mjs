@@ -27,6 +27,16 @@ test('popup scripts, CSS, module imports and DOM IDs connect to real files/eleme
  for(const m of js.matchAll(/\$\('([^']+)'\)/g))assert.ok(ids.includes(m[1]),m[1]);
  assert.doesNotMatch(html,/bridge\.js|tests\//);
 });
+test('production popup defaults to replace-all with visible unchecked confirmation',()=>{
+ const html=read(manifest.action.default_popup);
+ const mode=html.match(/<select id="mode">([\s\S]*?)<\/select>/)?.[1];
+ assert.ok(mode,'mode select exists');
+ const selected=[...mode.matchAll(/<option\b([^>]*)>/g)].filter(match=>/\bselected\b/.test(match[1]));
+ assert.equal(selected.length,1);assert.match(selected[0][1],/\bvalue="replace"/);
+ assert.match(mode,/value="selection"/,'selection insertion remains opt-in');
+ assert.doesNotMatch(html.match(/<input id="replaceConfirmed"[^>]*>/)?.[0]??'checked',/\bchecked\b/);
+ assert.doesNotMatch(html.match(/<label id="replaceRow"[^>]*>/)?.[0]??'hidden',/\bhidden\b/);
+});
 test('demo and test local imports/src/href paths resolve after repackaging',()=>{
  for(const file of [...walk(join(root,'demo')),...walk(join(root,'tests'))]){
   if(!/\.(html|mjs|js)$/.test(file))continue;

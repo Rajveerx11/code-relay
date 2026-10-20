@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">CodeRelay</title>
+  <desc id="description">Mint code brackets surround a white right-facing relay arrow on a rounded forest-green tile.</desc>
+  <rect width="512" height="512" rx="112" fill="#143c32"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M164 152 84 256l80 104M348 152l80 104-80 104" stroke="#bff2d2" stroke-width="28"/>
+    <path d="M190 256h132m-40-40 40 40-40 40" stroke="#ffffff" stroke-width="24"/>
+  </g>
+</svg>
